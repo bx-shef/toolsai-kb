@@ -1,0 +1,18 @@
+# Что НЕ попадает в Composer-пакет (git archive соблюдает export-ignore).
+#
+# Список обязан совпадать со списком KEEP в build.sh — сверяется
+# автоматически (build.sh, check_gitattributes).
+
+/.claude/		export-ignore
+/.gitattributes		export-ignore
+/.github/		export-ignore
+/.gitignore		export-ignore
+/AGENTS.md		export-ignore
+/CLAUDE.md		export-ignore
+/CONTRIBUTING.md	export-ignore
+/docs/			export-ignore
+/build.sh		export-ignore
+/tests/			export-ignore
+
+# Скрипты — всегда LF: sync.sh с CRLF не запускается.
+*.sh		text eol=lf

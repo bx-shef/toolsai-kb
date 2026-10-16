@@ -1,0 +1,18 @@
+/.idea
+.DS_Store
+
+composer.phar
+composer.lock
+/vendor/
+
+*.log
+
+# Документация Битрикса для агента — локальная копия, не в репозиторий
+/.bitrix-docs/
+.bitrix-docs/
+
+# Отзывы о навыках: их пишет агент по shef-feedback, в репозиторий они не едут.
+/.bitrixsh/
+
+# собирается build.sh
+/shef.toolsaikb.zip
