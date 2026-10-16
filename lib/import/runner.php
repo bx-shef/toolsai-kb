@@ -1,0 +1,134 @@
+<?php declare(strict_types=1);
+
+namespace Shef\ToolsAiKb\Import;
+
+use Bitrix\Main\Config\Option;
+use Shef\Options\Main\Constants as OptionsConstants;
+use Shef\Options\Main\TempFile\Pid;
+use Shef\ToolsAiKb\Main\Constants;
+use Shef\ToolsAiKb\Main\ProblemLogger;
+use Shef\ToolsAiKb\Model\MappingStoreOrm;
+use Shef\ToolsAiKb\Note\BitrixNoteGateway;
+
+/**
+ * Один прогон импорта на портале: блокировка, сбор пакетов, импорт, итог в
+ * настройки, ошибки в журнал. Его зовут агент, кнопка «Обновить статьи» и
+ * установщик.
+ *
+ * Автор раздела и документов — служебный пользователь shef.options
+ * (`Shef\Options\Main\Constants::getSystemUserId()`, по умолчанию ID 1).
+ */
+final class Runner
+{
+	/**
+	 * @return ImportReport|null null — импорт уже идёт в другом процессе
+	 */
+	public static function run(): ?ImportReport
+	{
+		$lock = new Pid(Constants::LOCK_GROUP);
+		if(!$lock->add())
+		{
+			return null;
+		}
+
+		try
+		{
+			// После add() в каталоге группы — только живые блокировки: больше одной — работает кто-то ещё
+			if(count(glob(Pid::getBasePath(Constants::LOCK_GROUP).'/*.lock') ?: []) > 1)
+			{
+				return null;
+			}
+
+			$report = static::import();
+		}
+		finally
+		{
+			$lock->remove();
+		}
+
+		Option::set(Constants::MODULE_ID, Constants::OPTION_LAST_REPORT, static::reportLine($report, date('Y-m-d H:i:s')));
+		static::log($report);
+
+		return $report;
+	}
+
+	private static function import(): ImportReport
+	{
+		$collected = SourceCollector::collect();
+		try
+		{
+			$importer = new Importer(new BitrixNoteGateway(), new MappingStoreOrm(), OptionsConstants::getSystemUserId());
+			$report = $importer->run(
+				$collected['sources'],
+				(int)Option::get(Constants::MODULE_ID, Constants::OPTION_COLLECTION_ID, '0'),
+				static::collectionName((string)Option::get(Constants::MODULE_ID, Constants::OPTION_COLLECTION_NAME, Constants::DEFAULT_COLLECTION_NAME))
+			);
+		}
+		catch(\Throwable $throwable)
+		{
+			$report = new ImportReport();
+			$report->errors[] = $throwable->getMessage();
+		}
+		$report = static::withCollectErrors($report, $collected['errors']);
+		$collectionOption = static::collectionOption($report);
+		if($collectionOption !== null)
+		{
+			Option::set(Constants::MODULE_ID, Constants::OPTION_COLLECTION_ID, $collectionOption);
+		}
+
+		return $report;
+	}
+
+	/**
+	 * Название раздела из настройки: пробелы по краям прочь, пусто — по умолчанию.
+	 */
+	public static function collectionName(string $raw): string
+	{
+		$name = trim($raw);
+
+		return $name !== '' ? mb_substr($name, 0, 255) : Constants::DEFAULT_COLLECTION_NAME;
+	}
+
+	/**
+	 * Ошибки сбора пакетов — в начало отчёта: они объясняют, почему пакетов меньше.
+	 *
+	 * @param list<string> $collectErrors
+	 */
+	public static function withCollectErrors(ImportReport $report, array $collectErrors): ImportReport
+	{
+		$report->errors = array_merge($collectErrors, $report->errors);
+
+		return $report;
+	}
+
+	/**
+	 * Что записать в SYS_collectionid: ID раздела из отчёта; null — не трогать
+	 * (импорт упал до раздела — прежний ID не стирать).
+	 */
+	public static function collectionOption(ImportReport $report): ?string
+	{
+		return $report->collectionId > 0 ? (string)$report->collectionId : null;
+	}
+
+	/** Строка итога для страницы настроек. */
+	public static function reportLine(ImportReport $report, string $at): string
+	{
+		return $at.' — '.$report->summary();
+	}
+
+	private static function log(ImportReport $report): void
+	{
+		if($report->errors === [])
+		{
+			return;
+		}
+		try
+		{
+			(new ProblemLogger())->warning('Импорт статей в «Базу знаний»: '.$report->summary(), ['errors' => $report->errors]);
+		}
+		catch(\Throwable)
+		{
+			// Журнал недоступен — итог всё равно на странице настроек
+		}
+	}
+}
