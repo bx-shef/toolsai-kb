@@ -14,6 +14,7 @@ final class ProblemLogger
 {
 	use LoggerProblems;
 
+	/** Поднять логгер shef.problems. */
 	public function __construct()
 	{
 		$this->initLogger();

@@ -21,11 +21,13 @@ final class ImportReport
 	/** @var list<string> статьи, которые не тронуты, потому что их поправили руками */
 	public array $manual = [];
 
+	/** Учесть ещё одну статью с действием $action. */
 	public function count(string $action): void
 	{
 		$this->counts[$action] = ($this->counts[$action] ?? 0) + 1;
 	}
 
+	/** Сколько статей с действием $action. */
 	public function get(string $action): int
 	{
 		return $this->counts[$action] ?? 0;

@@ -43,7 +43,7 @@ namespace
 
 		public function __call(string $name, array $args): mixed
 		{
-			$key = lcfirst(substr($name, 3));
+			$key = lcfirst(substr($name, str_starts_with($name, 'is') ? 2 : 3));
 			if(!array_key_exists($key, $this->fields))
 			{
 				throw new \Error('нет геттера '.$name);

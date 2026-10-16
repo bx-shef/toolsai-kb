@@ -32,6 +32,13 @@ Check::same('группа блокировки = Constants', str_contains($insta
 Check::same('агент = Constants', str_contains($installer, "AGENT_NAME = '".str_replace('\\', '\\\\', Constants::AGENT_NAME)."'"), true);
 Check::same('интервал агента = Constants', str_contains($installer, 'AGENT_INTERVAL = '.Constants::AGENT_INTERVAL.';'), true);
 Check::same('класс агента существует', method_exists('Shef\\ToolsAiKb\\Agent\\Refresh', 'run'), true);
+preg_match("/OPTIONS_TO_DELETE = \\[([^\\]]*)\\]/", $installer, $del);
+$deleted = array_map(static fn(string $x): string => trim($x, " '"), explode(',', $del[1] ?? ''));
+$shef_toolsaikb_default_option = null;
+require $root.'/default_option.php';
+Check::same('удаление стирает все настройки, кроме ID раздела', $deleted, array_merge(array_keys($shef_toolsaikb_default_option), [Constants::OPTION_LAST_REPORT]));
+Check::same('ID раздела переживает удаление', in_array(Constants::OPTION_COLLECTION_ID, $deleted, true), false);
+Check::same('таблица соответствий переживает удаление', str_contains($installer, 'MappingTable::drop'), false);
 Check::same('класс установщика', str_contains($installer, 'class shef_toolsaikb'), true);
 
 Check::group('настройки');
@@ -41,9 +48,10 @@ require $root.'/default_option.php';
 Check::same('умолчания', $shef_toolsaikb_default_option, [
 	Constants::OPTION_COLLECTION_NAME => Constants::DEFAULT_COLLECTION_NAME,
 	Constants::OPTION_AGENT => 'Y',
+	Constants::OPTION_SEARCH_ALL => 'N',
 ]);
 $conf = (string)file_get_contents($root.'/options_conf.php');
-Check::same('вкладка KB, опции collectionname и agent', [str_contains($conf, "Tab('KB')"), str_contains($conf, "Text('collectionname')"), str_contains($conf, "Checkbox('agent')")], [true, true, true]);
+Check::same('вкладка KB, опции collectionname и agent', [str_contains($conf, "Tab('KB')"), str_contains($conf, "Text('collectionname')"), str_contains($conf, "Checkbox('agent')"), str_contains($conf, "Checkbox('searchall')")], [true, true, true, true]);
 Check::same('options_page.php — копия options.php shef.options (без своих правок)', str_contains((string)file_get_contents($root.'/options_page.php'), 'Shef\\ToolsAiKb'), false);
 
 Check::group('языковые файлы');

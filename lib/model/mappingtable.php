@@ -16,11 +16,13 @@ use Bitrix\Main\ORM\Fields;
  */
 class MappingTable extends DataManager
 {
+	/** Имя таблицы в базе. */
 	public static function getTableName(): string
 	{
 		return 'shef_toolsaikb_mapping';
 	}
 
+	/** Поля таблицы. */
 	public static function getMap(): array
 	{
 		return [

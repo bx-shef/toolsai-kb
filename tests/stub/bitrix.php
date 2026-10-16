@@ -165,3 +165,32 @@ namespace Bitrix\Main\Provider\Params
 		}
 	}
 }
+
+namespace Bitrix\Main\Engine
+{
+	use Bitrix\Main\Error;
+
+	class Controller
+	{
+		/** @var list<Error> */
+		private array $errors = [];
+
+		public function configureActions()
+		{
+			return [];
+		}
+
+		public function addError(Error $error): static
+		{
+			$this->errors[] = $error;
+
+			return $this;
+		}
+
+		/** @return list<Error> */
+		public function getErrors(): array
+		{
+			return $this->errors;
+		}
+	}
+}

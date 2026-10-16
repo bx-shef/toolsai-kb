@@ -13,6 +13,8 @@ final class Constants
 	public const OPTION_COLLECTION_NAME = 'KB_collectionname';
 	/** Обновлять статьи агентом раз в сутки: Y/N. */
 	public const OPTION_AGENT = 'KB_agent';
+	/** Искать по всей «Базе знаний», а не только в своём разделе: Y/N, по умолчанию N. */
+	public const OPTION_SEARCH_ALL = 'KB_searchall';
 	/** ID раздела в `note` — пишет импорт, руками не правится. */
 	public const OPTION_COLLECTION_ID = 'SYS_collectionid';
 	/** Итог последнего импорта одной строкой — для страницы настроек. */
@@ -26,10 +28,14 @@ final class Constants
 	/** Адрес документа в «Базе знаний» (WikiImportLinkProvider ядра `note`). */
 	public const DOCUMENT_URL = '/note/document/#ID#/';
 
+	/** Сколько секунд держать ответ поиска в кеше (на пользователя и запрос). */
+	public const SEARCH_CACHE_TTL = 60;
+
 	/** Агент импорта — раз в сутки. */
 	public const AGENT_NAME = '\\Shef\\ToolsAiKb\\Agent\\Refresh::run();';
 	public const AGENT_INTERVAL = 86400;
 
+	/** Адрес документа `note` от корня портала. */
 	public static function documentUrl(int $documentId): string
 	{
 		return str_replace('#ID#', (string)$documentId, self::DOCUMENT_URL);

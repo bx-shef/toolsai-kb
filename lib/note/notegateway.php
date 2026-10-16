@@ -52,7 +52,9 @@ interface NoteGateway
 	 * запроса должно найтись в документе.
 	 *
 	 * @param list<string> $terms слова (QueryNormalizer::terms())
-	 * @return list<array{id: int, title: string, snippet: string, score: float}>
+	 * @return list<array{id: int, collectionId: int, title: string, snippet: string, score: float}>
+	 *         collectionId — раздел документа; 0 — документ доступен по личному
+	 *         доступу и раздел ядро не раскрывает
 	 */
 	public function search(array $terms, int $limit): array;
 }

@@ -46,6 +46,12 @@ $options->addTab(
 				->setTitle((string)Loc::getMessage($options->moduleId.'_TAB_KB_agent'))
 				->setDescription((string)Loc::getMessage($options->moduleId.'_TAB_KB_agent_descr'))
 		)
+		->addOption(
+			(new Options\Checkbox('searchall'))
+				->setDefValue('N')
+				->setTitle((string)Loc::getMessage($options->moduleId.'_TAB_KB_searchall'))
+				->setDescription((string)Loc::getMessage($options->moduleId.'_TAB_KB_searchall_descr'))
+		)
 );
 
 return $options->get();

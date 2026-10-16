@@ -6,3 +6,5 @@ $MESS['shef.toolsaikb_TAB_KB_collectionname'] = 'Название раздела
 $MESS['shef.toolsaikb_TAB_KB_collectionname_descr'] = 'Используется, когда раздел создаётся. Переименовать уже созданный раздел — в самой «Базе знаний».';
 $MESS['shef.toolsaikb_TAB_KB_agent'] = 'Обновлять статьи раз в сутки';
 $MESS['shef.toolsaikb_TAB_KB_agent_descr'] = 'Агент модуля. Выключено — статьи обновляются только кнопкой «Обновить статьи».';
+$MESS['shef.toolsaikb_TAB_KB_searchall'] = 'Искать по всей «Базе знаний»';
+$MESS['shef.toolsaikb_TAB_KB_searchall_descr'] = 'Выключено — поиск для других модулей (например, чата ИИ-помощника) идёт только по разделу модуля. Включено — по всем документам, которые видит сотрудник, в том числе по чужим разделам.';

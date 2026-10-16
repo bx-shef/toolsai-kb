@@ -6,4 +6,5 @@
 $shef_toolsaikb_default_option = [
 	'KB_collectionname' => 'ИИ: База знаний',
 	'KB_agent' => 'Y',
+	'KB_searchall' => 'N',
 ];

@@ -32,6 +32,11 @@ final class Importer
 	/** Текст документа-раздела пакета. */
 	public const SOURCE_PAGE_TEXT = 'Статьи раздела ниже. Раздел наполняется автоматически модулем #MODULE#: правка статьи в «Базе знаний» сохраняется, следующий импорт её не затрёт.';
 
+	/**
+	 * @param NoteGateway $note «База знаний»
+	 * @param MappingStore $mapping таблица соответствий
+	 * @param int $authorId автор раздела и документов (служебный пользователь)
+	 */
 	public function __construct(
 		private readonly NoteGateway $note,
 		private readonly MappingStore $mapping,

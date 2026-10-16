@@ -22,6 +22,12 @@ final class ArticleParser
 	public const MAX_MARKDOWN_BYTES = 1_048_576;
 	public const TITLE_MAX = 255;
 
+	/**
+	 * Разобрать файл статьи.
+	 *
+	 * @param string $path путь файла от каталога пакета — для заголовка по имени
+	 * @param string $content содержимое файла как есть
+	 */
 	public static function parse(string $path, string $content): Article
 	{
 		if(str_starts_with($content, "\xEF\xBB\xBF"))
@@ -54,6 +60,10 @@ final class ArticleParser
 		return hash('sha256', $title."\n".$markdown);
 	}
 
+	/**
+	 * Заголовок из имени файла: без `.md` и номера в начале, `-`/`_` -> пробел,
+	 * первая буква заглавная. Ничего не осталось — имя файла как есть.
+	 */
 	public static function titleFromPath(string $path): string
 	{
 		$name = (string)preg_replace('/\.md$/iu', '', basename($path));

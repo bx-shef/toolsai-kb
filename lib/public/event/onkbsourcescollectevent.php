@@ -25,6 +25,7 @@ final class OnKbSourcesCollectEvent extends Event
 	public const MODULE_ID = 'shef.toolsaikb';
 	public const NAME = 'OnKbSourcesCollect';
 
+	/** Событие без параметров: модуль и имя зафиксированы. */
 	public function __construct()
 	{
 		parent::__construct(self::MODULE_ID, self::NAME);

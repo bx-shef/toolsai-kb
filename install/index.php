@@ -28,10 +28,10 @@ Loc::loadMessages(__FILE__);
  * `note` («База знаний» ядра) проверяется здесь, а не в requireModules
  * (.settings.php): как ai и crm у shef.toolsai.
  *
- * Удаление: агент, блокировки, настройки и таблица (без savedata). Раздел и
- * документы в «Базе знаний» остаются — это уже содержимое портала, их
- * могли поправить люди. Переустановка без savedata создаст раздел и статьи
- * заново рядом со старыми.
+ * Удаление: агент, блокировки, настройки (без savedata). Раздел и документы
+ * в «Базе знаний» остаются — это содержимое портала, их могли поправить
+ * люди; вместе с ними остаются ID раздела и таблица соответствий, чтобы
+ * переустановка продолжила с тех же документов, а не плодила копии.
  */
 class shef_toolsaikb
 	extends CModule
@@ -71,6 +71,12 @@ class shef_toolsaikb
 	/** Constants::AGENT_NAME, AGENT_INTERVAL литералами — по той же причине. */
 	private const AGENT_NAME = '\\Shef\\ToolsAiKb\\Agent\\Refresh::run();';
 	private const AGENT_INTERVAL = 86400;
+
+	/**
+	 * Настройки, которые удаление без savedata стирает. SYS_collectionid
+	 * (ID раздела) — не здесь: см. UnInstallDB().
+	 */
+	private const OPTIONS_TO_DELETE = ['KB_collectionname', 'KB_agent', 'KB_searchall', 'SYS_lastreport'];
 
 	/** @var \CMain */
 	private $application;
@@ -119,8 +125,13 @@ class shef_toolsaikb
 	/**
 	 * Снятие регистрации.
 	 *
-	 * @param array $arParams ключ savedata = 'Y' оставляет настройки и таблицу
-	 *                        соответствий: переустановка продолжит с тех же документов
+	 * Раздел и документы в «Базе знаний» остаются после удаления — это
+	 * содержимое портала. Поэтому всегда остаются и сведения о них: ID раздела
+	 * (SYS_collectionid) и таблица соответствий. Иначе переустановка создала
+	 * бы второй раздел и копии всех статей.
+	 *
+	 * @param array $arParams ключ savedata = 'Y' оставляет и остальные
+	 *                        настройки; без него удаляются настройки, кроме ID раздела
 	 * @memo Need call last
 	 */
 	public function UnInstallDB(array $arParams = []): bool
@@ -129,17 +140,10 @@ class shef_toolsaikb
 
 		if(!$isSaveData)
 		{
-			try
+			foreach(self::OPTIONS_TO_DELETE as $name)
 			{
-				\Bitrix\Main\Loader::includeModule($this->MODULE_ID);
-				\Shef\ToolsAiKb\Model\MappingTable::drop();
+				Config\Option::delete($this->MODULE_ID, ['name' => $name]);
 			}
-			catch(\Throwable $throwable)
-			{
-
-			}
-
-			Config\Option::delete($this->MODULE_ID);
 		}
 
 		UnRegisterModule($this->MODULE_ID);

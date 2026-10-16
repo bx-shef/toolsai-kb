@@ -37,6 +37,8 @@ $args = NoteStub::$calls[1][1];
 Check::same('формат md, текст и автор', [$args['contentFormat'], $args['markdown'], $args['userId'], $args['parentId']], ['md', 'текст', 7, null]);
 Check::same('прочитан', $g->getDocument($doc), ['archived' => false, 'format' => 'md', 'title' => 'Квота', 'markdown' => 'текст']);
 Check::same('нет документа', $g->getDocument(9999), null);
+NoteStub::$documents[555] = new NoteStubEntity(['id' => 555, 'isArchived' => false, 'contentFormat' => 'json', 'title' => 'Т', 'markdown' => ['не строка']]);
+Check::same('текст не строкой — пустой', $g->getDocument(555)['markdown'], '');
 
 $g->overwriteDocument($doc, 'Квота 2', 'текст 2', 7);
 Check::same('перезапись без overwrite, с заголовком', NoteStub::$calls[2][1], ['documentId' => $doc, 'markdown' => 'текст 2', 'userId' => 7, 'overwrite' => false, 'title' => 'Квота 2']);
@@ -49,8 +51,14 @@ NoteStub::$overwriteThrows = null;
 
 Check::group('поиск');
 
-NoteStub::$searchResults = [new NoteStubEntity(['documentId' => 3, 'title' => 'Квота', 'snippet' => '<b>квот</b>а', 'score' => 2.5])];
-Check::same('результат', $g->search(['настро', 'квот'], 4), [['id' => 3, 'title' => 'Квота', 'snippet' => '<b>квот</b>а', 'score' => 2.5]]);
+NoteStub::$searchResults = [
+	new NoteStubEntity(['documentId' => 3, 'collectionId' => 12, 'sharedAccess' => false, 'title' => 'Квота', 'snippet' => '<b>квот</b>а', 'score' => 2.5]),
+	new NoteStubEntity(['documentId' => 4, 'collectionId' => 99, 'sharedAccess' => true, 'title' => 'Личное', 'snippet' => '', 'score' => 1.0]),
+];
+Check::same('результат; личный доступ — без раздела', $g->search(['настро', 'квот'], 4), [
+	['id' => 3, 'collectionId' => 12, 'title' => 'Квота', 'snippet' => '<b>квот</b>а', 'score' => 2.5],
+	['id' => 4, 'collectionId' => 0, 'title' => 'Личное', 'snippet' => '', 'score' => 1.0],
+]);
 Check::same('запрос — слова через пробел, первая страница', end(NoteStub::$calls)[1], ['query' => 'настро квот', 'limit' => 4, 'offset' => 0]);
 $before = count(NoteStub::$calls);
 Check::same('без слов — без запроса', [$g->search([], 4), count(NoteStub::$calls)], [[], $before]);

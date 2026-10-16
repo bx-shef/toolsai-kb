@@ -38,6 +38,11 @@ use Bitrix\Note\Public\Provider\SearchProvider;
  */
 final class BitrixNoteGateway implements NoteGateway
 {
+	/**
+	 * Подключить модуль `note`.
+	 *
+	 * @throws \RuntimeException модуль `note` не установлен
+	 */
 	public function __construct()
 	{
 		if(!Loader::includeModule('note'))
@@ -145,7 +150,8 @@ final class BitrixNoteGateway implements NoteGateway
 			'archived' => (bool)$document->getIsArchived(),
 			'format' => (string)$document->getContentFormat(),
 			'title' => (string)$document->getTitle(),
-			'markdown' => (string)$document->getMarkdown(),
+			// Поле текста ORM может отдать не строкой — тогда считаем текст пустым
+			'markdown' => is_string($markdown = $document->getMarkdown()) ? $markdown : '',
 		];
 	}
 
@@ -162,6 +168,7 @@ final class BitrixNoteGateway implements NoteGateway
 		{
 			$out[] = [
 				'id' => (int)$item->getDocumentId(),
+				'collectionId' => $item->isSharedAccess() ? 0 : (int)$item->getCollectionId(),
 				'title' => (string)$item->getTitle(),
 				'snippet' => (string)$item->getSnippet(),
 				'score' => (float)$item->getScore(),
