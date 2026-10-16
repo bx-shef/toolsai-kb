@@ -3,8 +3,8 @@
 /**
  * Страница настроек модуля (/bitrix/admin/settings.php?mid=shef.toolsaikb).
  *
- * Сверху — итог последнего импорта и кнопка «Обновить статьи» (только с
- * правом записи на модуль, POST с sessid). Ниже — обычная страница настроек
+ * Сверху — итог последнего импорта (право чтения на модуль) и кнопка
+ * «Обновить статьи» (право записи, POST с sessid). Ниже — обычная страница настроек
  * линейки: options_page.php — дословная копия options.php модуля
  * shef.options (навык shef-new-module), её не правим. Своя часть вынесена сюда,
  * чтобы копия оставалась дословной.
@@ -26,7 +26,8 @@ Loc::loadMessages(__FILE__);
 /** @var \CMain $APPLICATION */
 global $APPLICATION;
 
-if(Loader::includeModule('shef.toolsaikb'))
+// Без права чтения на модуль своя часть не показывается; отказ выведет options_page.php
+if(Loader::includeModule('shef.toolsaikb') && $APPLICATION->GetGroupRight('shef.toolsaikb') >= 'R')
 {
 	$canWrite = $APPLICATION->GetGroupRight('shef.toolsaikb') >= 'W';
 	$request = Context::getCurrent()?->getRequest();
