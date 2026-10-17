@@ -87,6 +87,20 @@ final class FakeNote implements NoteGateway
 		return $trashed;
 	}
 
+	public function getCollectionTree(int $collectionId): array
+	{
+		$out = [];
+		foreach($this->documents as $id => $d)
+		{
+			if($d['collectionId'] === $collectionId && !$d['removed'] && !$d['archived'])
+			{
+				$out[$id] = $d['parentId'];
+			}
+		}
+
+		return $out;
+	}
+
 	public function getDocument(int $documentId): ?array
 	{
 		$d = $this->documents[$documentId] ?? null;

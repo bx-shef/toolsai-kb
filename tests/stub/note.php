@@ -23,6 +23,8 @@ namespace
 		public static ?\Throwable $overwriteThrows = null;
 		/** @var array|null ответ DeleteDocumentCommand (data) */
 		public static ?array $deleteData = null;
+		/** @var list<array> ответ TreeProvider::getTree() */
+		public static array $tree = [];
 		public static int $nextId = 100;
 
 		public static function reset(): void
@@ -160,6 +162,20 @@ namespace Bitrix\Note\Public\Command
 			}
 
 			return new Result();
+		}
+	}
+}
+
+namespace Bitrix\Note\Public\Provider
+{
+	/** Как в ядре: дерево раздела без проверки прав (узлы с children). */
+	class TreeProvider
+	{
+		public function getTree(int $collectionId): array
+		{
+			\NoteStub::$calls[] = ['tree', ['collectionId' => $collectionId]];
+
+			return \NoteStub::$tree;
 		}
 	}
 }

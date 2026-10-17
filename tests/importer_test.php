@@ -180,4 +180,37 @@ $r = $importer->run([$other], 1, 'Р', $reader);
 Check::same('в корзине — соответствие убрано, не ошибка', [$r->get(Planner::GONE), $map->get('shef.toolsai:guide', 'b.md'), $r->errors], [1, null, []]);
 Check::same('страница пакета ушла следом', $map->get('shef.toolsai:guide', ''), null);
 
+Check::group('под документом — созданный вручную');
+
+$note = new FakeNote();
+$map = new FakeMapping();
+$importer = new Importer($note, $map, 7);
+$articles = [ArticleParser::parse('a.md', "# Альфа\nА"), ArticleParser::parse('b.md', "# Бета\nБ")];
+$importer->run([$source], 0, 'Р', $reader);
+$idA = $map->get('shef.toolsai:guide', 'a.md')['documentId'];
+$human = $note->createDocument(1, $idA, 'Своё', 'текст человека', 3);
+$articles = [ArticleParser::parse('b.md', "# Бета\nБ")];
+$r = $importer->run([$source], 1, 'Р', $reader);
+Check::same('статья с вложенным чужим документом не удалена', [$note->documents[$idA]['removed'], $note->documents[$human]['removed'], $map->get('shef.toolsai:guide', 'a.md') !== null], [false, false, true]);
+Check::same('отчёт объясняет', $r->kept, ['shef.toolsai:guide/a.md: оставлен — под ним документы, созданные вручную']);
+
+$other = new Source('shef.other:guide', 'Другой', '/kb2', 'shef.other');
+$page = $map->get('shef.toolsai:guide', '')['documentId'];
+$note->documents[$human]['parentId'] = $page;
+$r = $importer->run([$other], 1, 'Р', $reader);
+Check::same('статьи удалены, страница с чужим документом оставлена', [$note->documents[$idA]['removed'], $note->documents[$page]['removed'], $note->documents[$human]['removed']], [true, false, false]);
+Check::same('и в отчёте', in_array('shef.toolsai:guide: оставлен — под ним документы, созданные вручную', $r->kept, true), true);
+
+Check::group('пакет пришёл пустым');
+
+$note = new FakeNote();
+$map = new FakeMapping();
+$importer = new Importer($note, $map, 7);
+$articles = [ArticleParser::parse('a.md', "# Альфа\nА")];
+$importer->run([$source], 0, 'Р', $reader);
+$articles = [];
+$calls = count($note->calls);
+$r = $importer->run([$source], 1, 'Р', $reader);
+Check::same('пустой каталог — ничего не удаляется', [$r->get(Planner::DELETE), count($note->calls), $map->get('shef.toolsai:guide', 'a.md') !== null], [0, $calls, true]);
+
 Check::finish();

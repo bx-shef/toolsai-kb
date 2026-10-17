@@ -35,3 +35,7 @@ ORM — `bitrix-best-practice-sql`.
   (`SearchIndexService::deindexDocuments`); нет документа или он уже в
   корзине — `data['success'] = false`, ошибки в `Result` нет. Прав не
   проверяет — их проверяют контроллеры (`DocumentController`).
+- `lib/Public/Provider/TreeProvider.php::getTree()` — всё дерево раздела без
+  проверки прав (`DocumentRepository::getCollectionDocuments`: без архивных и
+  без корзины). По нему импорт проверяет, нет ли под удаляемым документом
+  документов, созданных людьми.

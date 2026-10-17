@@ -23,7 +23,9 @@ use Shef\ToolsAiKb\Note\NoteGateway;
  *     страница пакета с такими статьями тоже остаётся.
  *
  * Защита от сбоя: событие не вернуло ни одного пакета — ничего не удаляется;
- * пакет прочитан с ошибками — его статьи не удаляются; сбор пакетов с
+ * пакет прочитан с ошибками или пришёл пустым — его статьи не удаляются;
+ * под документом есть документ, которого нет в соответствиях (создан
+ * человеком), — документ не удаляется: ядро унесло бы его в корзину вместе; сбор пакетов с
  * ошибками ($pruneMissingSources = false) — пропавшие пакеты не удаляются.
  *
  * Повторный прогон без изменений в пакетах ничего не пишет в `note`.
@@ -101,7 +103,8 @@ final class Importer
 		foreach($sources as $source)
 		{
 			$read = $reader($source->dir);
-			$clean[$source->code] = $read['errors'] === [];
+			// Пакет без единой статьи — неуверенно (пустой каталог может быть сбоем): из него не удаляем
+			$clean[$source->code] = $read['errors'] === [] && $read['articles'] !== [];
 			$present[$source->code.'|'] = true;
 			foreach($read['articles'] as $article)
 			{
@@ -153,6 +156,12 @@ final class Importer
 			return;
 		}
 
+		$owned = [];
+		foreach($rows as $row)
+		{
+			$owned[$row['documentId']] = true;
+		}
+
 		/** @var array<string, array{pages: list<array>, articles: list<array>}> $groups */
 		$groups = [];
 		foreach($rows as $row)
@@ -170,12 +179,35 @@ final class Importer
 			$groups[$code][$row['path'] === '' ? 'pages' : 'articles'][] = $row;
 		}
 
+		if($groups === [])
+		{
+			return;
+		}
+		try
+		{
+			$tree = $this->note->getCollectionTree($report->collectionId);
+		}
+		catch(\Throwable $throwable)
+		{
+			$report->errors[] = 'дерево раздела не прочитано, пропавшие статьи не удалены: '.$throwable->getMessage();
+
+			return;
+		}
+		$children = [];
+		foreach($tree as $id => $parentId)
+		{
+			if($parentId !== null)
+			{
+				$children[$parentId][] = $id;
+			}
+		}
+
 		foreach($groups as $code => $group)
 		{
 			$kept = 0;
 			foreach($group['articles'] ?? [] as $row)
 			{
-				$kept += $this->removeObsolete($report, $row) ? 0 : 1;
+				$kept += $this->removeObsolete($report, $row, $children, $owned) ? 0 : 1;
 			}
 			foreach($group['pages'] ?? [] as $row)
 			{
@@ -184,7 +216,7 @@ final class Importer
 					$report->kept[] = $code.': страница пакета оставлена — под ней правленные руками или архивные статьи';
 					continue;
 				}
-				$this->removeObsolete($report, $row);
+				$this->removeObsolete($report, $row, $children, $owned);
 			}
 		}
 	}
@@ -193,9 +225,11 @@ final class Importer
 	 * Один пропавший документ по Planner::decideObsolete().
 	 *
 	 * @param array{sourceCode: string, path: string, documentId: int, hash: string} $row
+	 * @param array<int, list<int>> $children ID документа -> ID дочерних (дерево раздела)
+	 * @param array<int, true> $owned ID документов из таблицы соответствий
 	 * @return bool true — документа больше нет (удалён или уже исчез), false — оставлен
 	 */
-	private function removeObsolete(ImportReport $report, array $row): bool
+	private function removeObsolete(ImportReport $report, array $row, array $children, array $owned): bool
 	{
 		$label = $row['sourceCode'].($row['path'] !== '' ? '/'.$row['path'] : '');
 		try
@@ -216,6 +250,13 @@ final class Importer
 					return false;
 
 				case Planner::DELETE:
+					if(self::hasForeignDescendant($row['documentId'], $children, $owned))
+					{
+						$report->kept[] = $label.': оставлен — под ним документы, созданные вручную';
+						$report->count(self::OBSOLETE_KEPT);
+
+						return false;
+					}
 					$trashed = $this->note->deleteDocument($row['documentId'], $this->authorId);
 					$extra = count(array_diff($trashed, [$row['documentId']]));
 					if($extra > 0)
@@ -303,5 +344,33 @@ final class Importer
 
 			return null;
 		}
+	}
+
+	/**
+	 * Есть ли под документом (на любой глубине) документ не из таблицы соответствий.
+	 *
+	 * @param array<int, list<int>> $children
+	 * @param array<int, true> $owned
+	 */
+	private static function hasForeignDescendant(int $documentId, array $children, array $owned): bool
+	{
+		$queue = $children[$documentId] ?? [];
+		$seen = [];
+		while($queue !== [])
+		{
+			$id = array_pop($queue);
+			if(isset($seen[$id]))
+			{
+				continue;
+			}
+			$seen[$id] = true;
+			if(!isset($owned[$id]))
+			{
+				return true;
+			}
+			array_push($queue, ...($children[$id] ?? []));
+		}
+
+		return false;
 	}
 }

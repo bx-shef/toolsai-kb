@@ -16,6 +16,7 @@ use Bitrix\Note\Public\Provider\CollectionProvider;
 use Bitrix\Note\Public\Provider\DocumentProvider;
 use Bitrix\Note\Public\Provider\Param\Search\SearchQuery;
 use Bitrix\Note\Public\Provider\SearchProvider;
+use Bitrix\Note\Public\Provider\TreeProvider;
 
 /**
  * «База знаний» через публичный API модуля `note` (сверено с note 26.250).
@@ -35,6 +36,9 @@ use Bitrix\Note\Public\Provider\SearchProvider;
  *  - Удаление — DeleteDocumentCommand: в корзину вместе с дочерними
  *    (MoveToRecycleBinService::moveSubtree), документ снимается с поиска;
  *    нет документа или он уже в корзине — ядро отвечает data['success'] = false.
+ *  - Дерево раздела — TreeProvider::getTree() (без проверки прав, без
+ *    архивных и корзины): перед удалением импорт смотрит, нет ли под
+ *    документом чужих документов.
  *  - Поиск — SearchProvider::search() с правами текущего пользователя.
  *
  * Команды прав не проверяют — их проверяют контроллеры ядра. Импорт пишет
@@ -157,6 +161,23 @@ final class BitrixNoteGateway implements NoteGateway
 		}
 
 		return array_values(array_map('intval', (array)($data['trashedIds'] ?? [$documentId])));
+	}
+
+	/** {@inheritDoc} */
+	public function getCollectionTree(int $collectionId): array
+	{
+		$out = [];
+		$walk = static function(array $nodes) use (&$walk, &$out): void
+		{
+			foreach($nodes as $node)
+			{
+				$out[(int)$node['id']] = $node['parentId'] !== null ? (int)$node['parentId'] : null;
+				$walk($node['children'] ?? []);
+			}
+		};
+		$walk((new TreeProvider())->getTree($collectionId));
+
+		return $out;
 	}
 
 	/** {@inheritDoc} */

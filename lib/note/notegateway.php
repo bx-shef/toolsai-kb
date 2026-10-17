@@ -50,6 +50,14 @@ interface NoteGateway
 	public function deleteDocument(int $documentId, int $userId): array;
 
 	/**
+	 * Дерево раздела без проверки прав: ID документа -> ID родителя (null —
+	 * верхний уровень). Архивные и документы в корзине ядро не отдаёт.
+	 *
+	 * @return array<int, int|null>
+	 */
+	public function getCollectionTree(int $collectionId): array;
+
+	/**
 	 * Документ как он лежит сейчас, без проверки прав; null — документа нет.
 	 *
 	 * @return array{archived: bool, format: string, title: string, markdown: string}|null
