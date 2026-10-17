@@ -42,6 +42,6 @@ final class OnViewSettingsMenuBuildEventHandler
 	 */
 	public static function items(string $moduleRight): array
 	{
-		return $moduleRight >= 'R' ? [['text' => self::TEXT, 'url' => Constants::SETTINGS_URL]] : [];
+		return $moduleRight >= 'R' ? [['text' => self::TEXT, 'url' => Constants::settingsUrl()]] : [];
 	}
 }

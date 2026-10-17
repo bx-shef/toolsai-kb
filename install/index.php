@@ -78,7 +78,7 @@ class shef_toolsaikb
 	 * Настройки, которые удаление без savedata стирает. SYS_collectionid
 	 * (ID раздела) — не здесь: см. UnInstallDB().
 	 */
-	private const OPTIONS_TO_DELETE = ['KB_collectionname', 'KB_agent', 'KB_searchall', 'SYS_lastreport'];
+	private const OPTIONS_TO_DELETE = ['KB_collectionname', 'KB_agent', 'KB_searchall', 'SYS_lastreport', 'SYS_eventsversion'];
 
 	/** @var \CMain */
 	private $application;
