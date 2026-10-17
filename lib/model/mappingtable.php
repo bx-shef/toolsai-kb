@@ -12,7 +12,9 @@ use Bitrix\Main\ORM\Fields;
  * SOURCE_CODE — код пакета (`shef.toolsai:guide`), PATH — путь статьи от
  * каталога пакета (пустой — документ-раздел пакета), NOTE_DOCUMENT_ID —
  * документ в `note`, HASH — sha256 заголовка и текста, которые импорт
- * записал последним (Import\ArticleParser::hash()). Пара SOURCE_CODE + PATH уникальна.
+ * записал последним (Import\ArticleParser::hash()), VIEW_URL — адрес статьи в
+ * шаблоне модуля (Import\ViewUrl; пусто — ссылка на документ `note`, в том
+ * числе для правленной руками статьи). Пара SOURCE_CODE + PATH уникальна.
  */
 class MappingTable extends DataManager
 {
@@ -31,20 +33,29 @@ class MappingTable extends DataManager
 			(new Fields\StringField('PATH'))->configureSize(255)->configureDefaultValue(''),
 			(new Fields\StringField('HASH'))->configureSize(64)->configureRequired(),
 			(new Fields\IntegerField('NOTE_DOCUMENT_ID'))->configureRequired(),
+			(new Fields\StringField('VIEW_URL'))->configureSize(500)->configureDefaultValue(''),
 			(new Fields\DatetimeField('UPDATED_AT'))->configureRequired(),
 		];
 	}
 
-	/** Создать таблицу, если её нет. Идемпотентно. */
+	/**
+	 * Создать таблицу, если её нет; таблице версий до 1.2.0 добавить колонку
+	 * VIEW_URL. Идемпотентно — зовут установщик и каждый импорт (Import\Runner).
+	 */
 	public static function init(): void
 	{
 		$connection = Application::getConnection();
 		if($connection->isTableExists(static::getTableName()))
 		{
+			if($connection->getTableField(static::getTableName(), 'VIEW_URL') === null)
+			{
+				$connection->queryExecute('ALTER TABLE '.static::getTableName()." ADD COLUMN VIEW_URL VARCHAR(500) NOT NULL DEFAULT '' AFTER NOTE_DOCUMENT_ID");
+			}
+
 			return;
 		}
 		$connection->queryExecute(sprintf(
-			"CREATE TABLE %s (\n\tID INT(11) NOT NULL AUTO_INCREMENT,\n\tSOURCE_CODE VARCHAR(100) NOT NULL,\n\tPATH VARCHAR(255) NOT NULL DEFAULT '',\n\tHASH CHAR(64) NOT NULL,\n\tNOTE_DOCUMENT_ID INT(11) NOT NULL,\n\tUPDATED_AT DATETIME NOT NULL,\n\tPRIMARY KEY (ID),\n\tUNIQUE KEY UX_SHEF_TOOLSAIKB_MAPPING (SOURCE_CODE, PATH),\n\tKEY IX_SHEF_TOOLSAIKB_MAPPING_DOC (NOTE_DOCUMENT_ID)\n)",
+			"CREATE TABLE %s (\n\tID INT(11) NOT NULL AUTO_INCREMENT,\n\tSOURCE_CODE VARCHAR(100) NOT NULL,\n\tPATH VARCHAR(255) NOT NULL DEFAULT '',\n\tHASH CHAR(64) NOT NULL,\n\tNOTE_DOCUMENT_ID INT(11) NOT NULL,\n\tVIEW_URL VARCHAR(500) NOT NULL DEFAULT '',\n\tUPDATED_AT DATETIME NOT NULL,\n\tPRIMARY KEY (ID),\n\tUNIQUE KEY UX_SHEF_TOOLSAIKB_MAPPING (SOURCE_CODE, PATH),\n\tKEY IX_SHEF_TOOLSAIKB_MAPPING_DOC (NOTE_DOCUMENT_ID)\n)",
 			static::getTableName()
 		));
 	}

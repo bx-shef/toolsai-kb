@@ -17,7 +17,7 @@ $note = new FakeNote();
 $note->searchAnswers['настро квот'] = [$hit(1, '<b>Квота</b> расхода'), $hit(2)];
 $found = KbSearchService::findWith($note, 'Как настроить квоту?', 2);
 Check::same('в note ушли основы без стоп-слов, с лимитом', $note->calls, ['search настро квот 2']);
-Check::same('форма ответа', $found[0], ['id' => 1, 'title' => 'Статья 1', 'url' => '/note/document/1/', 'snippet' => 'Квота расхода']);
+Check::same('форма ответа', $found[0], ['id' => 1, 'title' => 'Статья 1', 'url' => '/note/document/1/', 'noteUrl' => '/note/document/1/', 'snippet' => 'Квота расхода']);
 Check::same('две статьи', count($found), 2);
 
 Check::group('добор по словам');

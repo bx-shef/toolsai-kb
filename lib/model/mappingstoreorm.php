@@ -14,17 +14,17 @@ final class MappingStoreOrm implements MappingStore
 	public function get(string $sourceCode, string $path): ?array
 	{
 		$row = MappingTable::query()
-			->setSelect(['NOTE_DOCUMENT_ID', 'HASH'])
+			->setSelect(['NOTE_DOCUMENT_ID', 'HASH', 'VIEW_URL'])
 			->where('SOURCE_CODE', $sourceCode)
 			->where('PATH', $path)
 			->setLimit(1)
 			->fetch();
 
-		return $row ? ['documentId' => (int)$row['NOTE_DOCUMENT_ID'], 'hash' => (string)$row['HASH']] : null;
+		return $row ? ['documentId' => (int)$row['NOTE_DOCUMENT_ID'], 'hash' => (string)$row['HASH'], 'viewUrl' => (string)$row['VIEW_URL']] : null;
 	}
 
 	/** {@inheritDoc} */
-	public function save(string $sourceCode, string $path, int $documentId, string $hash): void
+	public function save(string $sourceCode, string $path, int $documentId, string $hash, string $viewUrl = ''): void
 	{
 		$row = MappingTable::query()
 			->setSelect(['ID'])
@@ -32,7 +32,7 @@ final class MappingStoreOrm implements MappingStore
 			->where('PATH', $path)
 			->setLimit(1)
 			->fetch();
-		$fields = ['NOTE_DOCUMENT_ID' => $documentId, 'HASH' => $hash, 'UPDATED_AT' => new DateTime()];
+		$fields = ['NOTE_DOCUMENT_ID' => $documentId, 'HASH' => $hash, 'VIEW_URL' => $viewUrl, 'UPDATED_AT' => new DateTime()];
 		$result = $row
 			? MappingTable::update((int)$row['ID'], $fields)
 			: MappingTable::add($fields + ['SOURCE_CODE' => $sourceCode, 'PATH' => $path]);
@@ -47,7 +47,7 @@ final class MappingStoreOrm implements MappingStore
 	{
 		$out = [];
 		$rows = MappingTable::query()
-			->setSelect(['SOURCE_CODE', 'PATH', 'NOTE_DOCUMENT_ID', 'HASH'])
+			->setSelect(['SOURCE_CODE', 'PATH', 'NOTE_DOCUMENT_ID', 'HASH', 'VIEW_URL'])
 			->setOrder(['ID' => 'ASC'])
 			->exec();
 		while($row = $rows->fetch())
@@ -57,7 +57,30 @@ final class MappingStoreOrm implements MappingStore
 				'path' => (string)$row['PATH'],
 				'documentId' => (int)$row['NOTE_DOCUMENT_ID'],
 				'hash' => (string)$row['HASH'],
+				'viewUrl' => (string)$row['VIEW_URL'],
 			];
+		}
+
+		return $out;
+	}
+
+	/** {@inheritDoc} */
+	public function viewUrls(array $documentIds): array
+	{
+		$documentIds = array_values(array_unique(array_filter(array_map('intval', $documentIds), static fn(int $id): bool => $id > 0)));
+		if($documentIds === [])
+		{
+			return [];
+		}
+		$out = [];
+		$rows = MappingTable::query()
+			->setSelect(['NOTE_DOCUMENT_ID', 'VIEW_URL'])
+			->whereIn('NOTE_DOCUMENT_ID', $documentIds)
+			->where('VIEW_URL', '!=', '')
+			->exec();
+		while($row = $rows->fetch())
+		{
+			$out[(int)$row['NOTE_DOCUMENT_ID']] = (string)$row['VIEW_URL'];
 		}
 
 		return $out;

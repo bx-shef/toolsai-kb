@@ -11,11 +11,16 @@ use Bitrix\Main\Event;
  * Параметров нет. Ответ обработчика:
  *
  *   new EventResult(EventResult::SUCCESS, ['sources' => [
- *       ['code' => 'shef.toolsai:guide', 'title' => 'ИИ: Справка по модулю', 'dir' => '/абсолютный/путь/к/каталогу'],
+ *       ['code' => 'shef.toolsai:guide', 'title' => 'ИИ: Справка по модулю', 'dir' => '/абсолютный/путь/к/каталогу',
+ *        'viewUrl' => '/shef/toolsai/kb/guide/{path}'],
  *   ], 'shef.toolsai');
  *
  * `code` начинается с идентификатора модуля и двоеточия; `dir` — каталог со
- * статьями `*.md` (подкаталоги тоже). Правила проверки — Import\SourceValidator.
+ * статьями `*.md` (подкаталоги тоже). `viewUrl` — необязательный шаблон адреса
+ * статьи в родном шаблоне модуля: путь своего портала (начинается с `/`), в нём
+ * `{path}` — путь файла в пакете без `.md`, `{slug}` — имя файла без `.md`.
+ * Есть viewUrl — поиск (KbSearchService) ведёт на него, иначе на документ
+ * `note`. Правила проверки — Import\SourceValidator и Import\ViewUrl.
  *
  * Отправляет Import\SourceCollector при каждом импорте (агент, кнопка
  * «Обновить статьи», установка).

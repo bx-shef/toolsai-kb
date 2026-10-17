@@ -14,7 +14,8 @@ use Shef\ToolsAiKb\Note\NoteGateway;
  *  2. На каждый пакет — документ-раздел верхнего уровня (заголовок пакета),
  *     статьи пакета — его дочерние документы.
  *  3. Каждая статья — по Planner: создать, перезаписать, не трогать.
- *     Соответствие и хэш записанного — в MappingStore.
+ *     Соответствие, хэш записанного и адрес статьи в шаблоне модуля
+ *     (viewUrl пакета, ViewUrl::build(); у правленной руками — пусто) — в MappingStore.
  *
  *  4. Статьи, которых больше нет в пакете, и пакеты, которых больше нет в
  *     событии, — по Planner::decideObsolete(): документ уходит в корзину
@@ -239,6 +240,7 @@ final class Importer
 			switch($action)
 			{
 				case Planner::MANUAL:
+					$this->clearViewUrl($row);
 					$report->kept[] = $label.': нет в пакете, но правлена руками — оставлена';
 					$report->manualItems[] = ['label' => $label, 'title' => (string)($document['title'] ?? ''), 'documentId' => $row['documentId']];
 					$report->count(self::OBSOLETE_KEPT);
@@ -246,6 +248,7 @@ final class Importer
 					return false;
 
 				case Planner::ARCHIVED:
+					$this->clearViewUrl($row);
 					$report->kept[] = $label.': нет в пакете, документ в архиве — оставлен';
 					$report->count(self::OBSOLETE_KEPT);
 
@@ -291,6 +294,7 @@ final class Importer
 	private function apply(ImportReport $report, Source $source, Article $article, int $collectionId, ?int $parentId): ?int
 	{
 		$label = $source->code.($article->path !== '' ? '/'.$article->path : '');
+		$viewUrl = ViewUrl::build($source->viewUrl, $article->path);
 		try
 		{
 			$mapped = $this->mapping->get($source->code, $article->path);
@@ -302,7 +306,7 @@ final class Importer
 				case Planner::CREATE:
 				case Planner::RECREATE:
 					$documentId = $this->note->createDocument($collectionId, $parentId, $article->title, $article->markdown, $this->authorId);
-					$this->mapping->save($source->code, $article->path, $documentId, $article->hash);
+					$this->mapping->save($source->code, $article->path, $documentId, $article->hash, $viewUrl);
 					$report->count($action);
 
 					return $documentId;
@@ -318,12 +322,14 @@ final class Importer
 
 						return null;
 					}
-					$this->mapping->save($source->code, $article->path, $mapped['documentId'], $article->hash);
+					$this->mapping->save($source->code, $article->path, $mapped['documentId'], $article->hash, $viewUrl);
 					$report->count($action);
 
 					return $mapped['documentId'];
 
 				case Planner::MANUAL:
+					// Актуальный текст — в `note`: ссылка поиска ведёт туда, а не в шаблон модуля
+					$this->syncViewUrl($source, $article, $mapped, '');
 					$report->manual[] = $label;
 					$report->manualItems[] = ['label' => $label, 'title' => (string)($document['title'] ?? ''), 'documentId' => $mapped['documentId']];
 					$report->count($action);
@@ -336,6 +342,7 @@ final class Importer
 					return null;
 
 				default:
+					$this->syncViewUrl($source, $article, $mapped, $viewUrl);
 					$report->count($action);
 
 					return $mapped['documentId'] ?? null;
@@ -347,6 +354,36 @@ final class Importer
 
 			return null;
 		}
+	}
+
+	/**
+	 * Поправить адрес статьи в таблице, если он разошёлся (у пакета появился или
+	 * сменился viewUrl, статью поправили руками). Совпадает — ничего не пишет.
+	 *
+	 * @param array{documentId: int, hash: string, viewUrl?: string}|null $mapped
+	 */
+	private function syncViewUrl(Source $source, Article $article, ?array $mapped, string $viewUrl): void
+	{
+		if($mapped === null || ($mapped['viewUrl'] ?? '') === $viewUrl)
+		{
+			return;
+		}
+		$this->mapping->save($source->code, $article->path, $mapped['documentId'], $mapped['hash'], $viewUrl);
+	}
+
+	/**
+	 * Статьи нет в пакете, документ оставлен — страницы в шаблоне модуля уже
+	 * нет: ссылка поиска должна вести в `note`. Адрес пуст — ничего не пишет.
+	 *
+	 * @param array{sourceCode: string, path: string, documentId: int, hash: string, viewUrl?: string} $row
+	 */
+	private function clearViewUrl(array $row): void
+	{
+		if(($row['viewUrl'] ?? '') === '')
+		{
+			return;
+		}
+		$this->mapping->save($row['sourceCode'], $row['path'], $row['documentId'], $row['hash'], '');
 	}
 
 	/**

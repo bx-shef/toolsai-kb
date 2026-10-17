@@ -8,6 +8,7 @@ use Shef\Options\Main\TempFile\Pid;
 use Shef\ToolsAiKb\Main\Constants;
 use Shef\ToolsAiKb\Main\ProblemLogger;
 use Shef\ToolsAiKb\Model\MappingStoreOrm;
+use Shef\ToolsAiKb\Model\MappingTable;
 use Shef\ToolsAiKb\Note\BitrixNoteGateway;
 
 /**
@@ -57,6 +58,8 @@ final class Runner
 		$collected = SourceCollector::collect();
 		try
 		{
+			// Обновление модуля без переустановки: колонка VIEW_URL появляется здесь
+			MappingTable::init();
 			$importer = new Importer(new BitrixNoteGateway(), new MappingStoreOrm(), OptionsConstants::getSystemUserId());
 			$report = $importer->run(
 				$collected['sources'],

@@ -5,14 +5,17 @@ namespace Shef\ToolsAiKb\Import;
 /**
  * Проверка ответов на событие `shef.toolsaikb:OnKbSourcesCollect`.
  *
- * Контракт ответа: `EventResult(SUCCESS, ['sources' => [['code', 'title', 'dir'], ...]], <moduleId>)`.
+ * Контракт ответа: `EventResult(SUCCESS, ['sources' => [['code', 'title', 'dir', 'viewUrl'?], ...]], <moduleId>)`.
  * Пакет принимается, если:
  *
  *  - ответ SUCCESS и в нём указан модуль;
  *  - `code` вида `<moduleId>:<имя>` (строчные латинские буквы, цифры, `.`, `_`, `-`;
  *    до 100 символов) и начинается с модуля, который его отдал;
  *  - `title` непустой, до 255 символов;
- *  - `dir` — абсолютный путь к существующему каталогу.
+ *  - `dir` — абсолютный путь к существующему каталогу;
+ *  - `viewUrl` (необязательно) — шаблон адреса статьи в шаблоне модуля, путь
+ *    своего портала с `{path}`/`{slug}` (ViewUrl::isValidTemplate()). Поле
+ *    есть, но не годится — пакет отклоняется.
  *
  * Код повторился — берётся первый пакет. Всё отклонённое попадает в ошибки:
  * их пишет в журнал импорт. Проверка каталога подставляется снаружи — так
@@ -80,7 +83,7 @@ final class SourceValidator
 					$errors[] = $label.': пакет '.$code.' уже отдал модуль '.$sources[$code]->moduleId.' — пропущен';
 					continue;
 				}
-				$sources[$code] = new Source($code, trim((string)$item['title']), rtrim((string)$item['dir'], '/'), $moduleId);
+				$sources[$code] = new Source($code, trim((string)$item['title']), rtrim((string)$item['dir'], '/'), $moduleId, (string)($item['viewUrl'] ?? ''));
 			}
 		}
 
@@ -111,6 +114,10 @@ final class SourceValidator
 		if(!is_string($dir) || !str_starts_with($dir, '/') || str_contains($dir, "\0") || !($this->isDir)($dir))
 		{
 			return 'dir не абсолютный путь к каталогу';
+		}
+		if(array_key_exists('viewUrl', $item) && !ViewUrl::isValidTemplate($item['viewUrl']))
+		{
+			return 'viewUrl не путь своего портала с {path} или {slug}';
 		}
 
 		return null;

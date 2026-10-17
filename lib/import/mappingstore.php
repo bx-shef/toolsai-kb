@@ -9,21 +9,31 @@ namespace Shef\ToolsAiKb\Import;
 interface MappingStore
 {
 	/**
-	 * @return array{documentId: int, hash: string}|null
+	 * @return array{documentId: int, hash: string, viewUrl: string}|null
 	 */
 	public function get(string $sourceCode, string $path): ?array;
 
 	/**
-	 * Записать соответствие: документ и хэш того, что импорт в него записал.
+	 * Записать соответствие: документ, хэш того, что импорт в него записал, и
+	 * адрес статьи в шаблоне модуля ('' — ссылка на документ `note`).
 	 */
-	public function save(string $sourceCode, string $path, int $documentId, string $hash): void;
+	public function save(string $sourceCode, string $path, int $documentId, string $hash, string $viewUrl = ''): void;
 
 	/**
 	 * Все соответствия.
 	 *
-	 * @return list<array{sourceCode: string, path: string, documentId: int, hash: string}>
+	 * @return list<array{sourceCode: string, path: string, documentId: int, hash: string, viewUrl: string}>
 	 */
 	public function all(): array;
+
+	/**
+	 * Адреса статей в шаблоне модуля по документам `note`. Документа нет в
+	 * таблице или адреса нет — ключа нет.
+	 *
+	 * @param list<int> $documentIds
+	 * @return array<int, string> ID документа -> адрес
+	 */
+	public function viewUrls(array $documentIds): array;
 
 	/**
 	 * Убрать соответствие (документ удалён или его больше нет).
