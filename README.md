@@ -56,4 +56,6 @@ if(\Bitrix\Main\Loader::includeModule('shef.toolsaikb'))
 
 ## Лицензия
 
-MIT, см. [LICENSE](LICENSE).
+Модуль бесплатный и в лицензию shef.toolsai («Звонки, сделки и отчёты») не входит — как и остальные модули-соседи shef.toolsaiassistant, shef.toolsaiannounce, shef.toolsaikb. Отдельно платный в линейке — только MCP-сервер toolsai-mcp. От shef.toolsai модуль не зависит.
+
+Лицензия кода — MIT, см. [LICENSE](LICENSE).
