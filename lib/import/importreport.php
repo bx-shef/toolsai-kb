@@ -27,6 +27,9 @@ final class ImportReport
 	/** @var list<string> пропавшие из пакетов статьи, которые оставлены, и почему */
 	public array $kept = [];
 
+	/** Фрагментов в индексе поиска после импорта (1.3.0); 0 — индекс не пересобран. */
+	public int $indexChunks = 0;
+
 	/** Учесть ещё одну статью с действием $action. */
 	public function count(string $action): void
 	{
@@ -53,6 +56,7 @@ final class ImportReport
 			'в архиве (не тронуты): '.($this->get(Planner::ARCHIVED) + $this->get(Importer::REMOVED)),
 			'удалено в корзину: '.$this->get(Planner::DELETE),
 			'нет в пакете, оставлены: '.$this->get(Importer::OBSOLETE_KEPT),
+			'фрагментов в индексе: '.$this->indexChunks,
 			'ошибок: '.count($this->errors),
 		];
 
@@ -63,7 +67,7 @@ final class ImportReport
 	 * Для сохранения итога (страница настроек): счётчики, правленные руками,
 	 * оставленные, ошибки и время прогона.
 	 *
-	 * @return array{at: string, collectionId: int, sources: int, counts: array<string, int>, manual: list<array{label: string, title: string, documentId: int}>, kept: list<string>, errors: list<string>}
+	 * @return array{at: string, collectionId: int, sources: int, counts: array<string, int>, manual: list<array{label: string, title: string, documentId: int}>, kept: list<string>, errors: list<string>, indexChunks: int}
 	 */
 	public function toArray(string $at): array
 	{
@@ -75,6 +79,7 @@ final class ImportReport
 			'manual' => $this->manualItems,
 			'kept' => $this->kept,
 			'errors' => $this->errors,
+			'indexChunks' => $this->indexChunks,
 		];
 	}
 }

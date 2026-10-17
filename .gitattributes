@@ -16,3 +16,4 @@
 
 # Скрипты — всегда LF: sync.sh с CRLF не запускается.
 *.sh		text eol=lf
+/tools/			export-ignore

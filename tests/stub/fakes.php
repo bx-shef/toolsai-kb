@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
 /**
- * Подставные «База знаний» и таблица соответствий — в памяти. Повторяют
- * поведение настоящих (Note\BitrixNoteGateway, Model\MappingStoreOrm) и
+ * Подставные «База знаний», таблица соответствий и фрагменты — в памяти. Повторяют
+ * поведение настоящих (Note\BitrixNoteGateway, Model\MappingStoreOrm, Model\ChunkStoreOrm) и
  * пишут каждый вызов, чтобы тест видел, что импорт сделал.
  */
 
@@ -168,5 +168,28 @@ final class FakeMapping implements MappingStore
 	public function delete(string $sourceCode, string $path): void
 	{
 		unset($this->rows[$sourceCode.'|'.$path]);
+	}
+}
+
+final class FakeChunkStore implements \Shef\ToolsAiKb\Search\ChunkStore
+{
+	/** @var list<array{documentId: int, title: string, heading: string, text: string}> */
+	public array $rows = [];
+	public int $replaces = 0;
+	public bool $fail = false;
+
+	public function replace(array $rows): void
+	{
+		if($this->fail)
+		{
+			throw new RuntimeException('сбой таблицы');
+		}
+		$this->rows = $rows;
+		$this->replaces++;
+	}
+
+	public function all(): array
+	{
+		return $this->rows;
 	}
 }

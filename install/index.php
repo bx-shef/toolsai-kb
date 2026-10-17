@@ -20,7 +20,8 @@ Loc::loadMessages(__FILE__);
  * Канон — установщик shef.toolsai (проверки UTF-8, PHP, модулей и версий,
  * savedata, прерывание только через ShowForm). Что ставится:
  *
- *   1) таблица соответствий статей и документов (Model\MappingTable);
+ *   1) таблица соответствий статей и документов (Model\MappingTable) и
+ *      фрагментов статей для поиска (Model\ChunkTable, 1.3.0);
  *   2) агент «Обновить статьи» раз в сутки (Agent\Refresh);
  *   2а) подписки из installEvents (.settings.php, 1.1.2) — пункт в меню
  *      шестерёнки вида «ИИ»; снимает удаление;
@@ -30,7 +31,8 @@ Loc::loadMessages(__FILE__);
  * `note` («База знаний» ядра) проверяется здесь, а не в requireModules
  * (.settings.php): как ai и crm у shef.toolsai.
  *
- * Удаление: агент, блокировки, настройки (без savedata). Раздел и документы
+ * Удаление: агент, блокировки, настройки (без savedata), таблица фрагментов
+ * поиска (производная, всегда). Раздел и документы
  * в «Базе знаний» остаются — это содержимое портала, их могли поправить
  * люди; вместе с ними остаются ID раздела и таблица соответствий, чтобы
  * переустановка продолжила с тех же документов, а не плодила копии.
@@ -120,6 +122,7 @@ class shef_toolsaikb
 		\Bitrix\Main\Loader::includeModule($this->MODULE_ID);
 
 		\Shef\ToolsAiKb\Model\MappingTable::init();
+		\Shef\ToolsAiKb\Model\ChunkTable::init();
 
 		return true;
 	}
@@ -147,6 +150,16 @@ class shef_toolsaikb
 				Config\Option::delete($this->MODULE_ID, ['name' => $name]);
 			}
 		}
+
+		// Фрагменты для поиска — производные от документов `note`: уходят всегда,
+		// переустановка пересоберёт их первым импортом
+		// Имя таблицы — литералом: при удалении на классы модуля не опираемся
+		$connection = \Bitrix\Main\Application::getConnection();
+		if($connection->isTableExists('shef_toolsaikb_chunk'))
+		{
+			$connection->queryExecute('DROP TABLE shef_toolsaikb_chunk');
+		}
+		Config\Option::delete($this->MODULE_ID, ['name' => 'SYS_indexversion']);
 
 		UnRegisterModule($this->MODULE_ID);
 

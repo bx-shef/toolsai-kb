@@ -33,6 +33,8 @@
 | импорт на портале | `lib/import/runner.php`, агент `lib/agent/refresh.php` |
 | доступ к `note` | `lib/note/bitrixnotegateway.php` (только `Bitrix\Note\Public\…`) |
 | разбор вопроса | `lib/search/querynormalizer.php` — перенос `Rag::tokens()` shef.toolsai |
+| индекс фрагментов (RAG, 1.3.0) | `lib/search/` — `Chunker`, `Bm25Index`, `IndexBuilder`; таблица `lib/model/chunktable.php`; пересборка — `Runner::reindex()` |
+| замер поиска (hit@k, MRR) без портала | `tools/retrieval-eval.php`, `tools/retrievaleval/lib.php`, кейсы `tools/retrieval-evals/`; в поставку не идёт |
 | таблица соответствий | `lib/model/mappingtable.php` |
 | ajax | `lib/controller/search.php` -> `shef:toolsaikb.search.find` |
 | пункт в меню шестерёнки вида «ИИ» (shef.toolsai:OnViewSettingsMenuBuild, 1.1.2) | `lib/internals/integration/toolsai/eventhandler/onviewsettingsmenubuildeventhandler.php`; подписки после обновления копированием — `lib/main/maintenance.php` |
@@ -54,6 +56,9 @@
   правленные руками и архивные не трогаются. Событие без пакетов или сбор с
   ошибками — пропавшие пакеты не удаляются. Раздел в архиве не трогается.
 - Поиск по умолчанию — только свой раздел (фильтр выдачи), всё — `KB_searchall`.
+- Права в поиске проверяет только `note`: индекс фрагментов (1.3.0) ранжирует и
+  режет текст среди документов, которые `note` отдал сотруднику, — не больше.
+  Таблица фрагментов производная: уходит при удалении всегда.
 - Удаление не стирает ID раздела и таблицу соответствий: документы в `note` остаются.
 - `note` — в установщике (`NEED_MODULES_BY_VERSION`), не в `requireModules`.
 - `options_page.php` — дословная копия `options.php` shef.options; своё — в `options.php`.
