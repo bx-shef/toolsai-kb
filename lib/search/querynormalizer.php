@@ -13,8 +13,8 @@ namespace Shef\ToolsAiKb\Search;
  *
  * Поэтому вопрос сначала чистится: стоп-слова прочь, слова — к основе. Стоп-слова,
  * окончания и сам стеммер перенесены из `Shef\ToolsAi\Kb\Rag` модуля
- * shef.toolsai (1.21.0) без изменения смысла — так прежний поиск по справке и
- * этот разбирают вопрос одинаково; держит tests/querynormalizer_test.php.
+ * shef.toolsai (1.21.0) без изменения смысла; держит tests/querynormalizer_test.php.
+ * В shef.toolsai `Kb\Rag` снят — живая копия здесь, её же берёт Bm25Index.
  *
  * Без ядра.
  */

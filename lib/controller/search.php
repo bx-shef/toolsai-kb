@@ -10,7 +10,7 @@ use Shef\ToolsAiKb\Public\Service\KbSearchService;
  * Поиск статей из браузера:
  *
  *   BX.ajax.runAction('shef:toolsaikb.search.find', {data: {query: 'квота', limit: 5}})
- *     -> {articles: [{id, title, url, snippet}, ...]}
+ *     -> {articles: [{id, title, url, noteUrl, snippet, text}, ...]}
  *
  * Фильтры ядра по умолчанию (Authentication, HttpMethod GET/POST, Csrf):
  * configureActions() их не переопределяет — ключ `prefilters` заменил бы их
@@ -25,7 +25,7 @@ class Search extends Controller
 	/**
 	 * Найти статьи.
 	 *
-	 * @return array{articles: list<array{id: int, title: string, url: string, snippet: string}>}|null
+	 * @return array{articles: list<array{id: int, title: string, url: string, noteUrl: string, snippet: string, text: string}>}|null
 	 */
 	public function findAction(string $query, int $limit = 5): ?array
 	{

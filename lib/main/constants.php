@@ -19,6 +19,8 @@ final class Constants
 	public const OPTION_COLLECTION_ID = 'SYS_collectionid';
 	/** Итог последнего импорта одной строкой — для страницы настроек. */
 	public const OPTION_LAST_REPORT = 'SYS_lastreport';
+	/** Метка пересборки индекса фрагментов (1.3.0) — ключ кеша индекса. */
+	public const OPTION_INDEX_VERSION = 'SYS_indexversion';
 
 	public const DEFAULT_COLLECTION_NAME = 'ИИ: База знаний';
 
@@ -30,6 +32,9 @@ final class Constants
 
 	/** Сколько секунд держать ответ поиска в кеше (на пользователя и запрос). */
 	public const SEARCH_CACHE_TTL = 60;
+
+	/** Сколько секунд держать индекс фрагментов в кеше; сменилась метка — новый ключ. */
+	public const INDEX_CACHE_TTL = 86400 * 7;
 
 	/** Агент импорта — раз в сутки. */
 	public const AGENT_NAME = '\\Shef\\ToolsAiKb\\Agent\\Refresh::run();';

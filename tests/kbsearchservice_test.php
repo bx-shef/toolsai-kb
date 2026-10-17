@@ -8,6 +8,7 @@ require_once __DIR__.'/assert.php';
 require_once __DIR__.'/stub/autoload.php';
 
 use Shef\ToolsAiKb\Public\Service\KbSearchService;
+use Shef\ToolsAiKb\Search\Bm25Index;
 
 $hit = static fn(int $id, string $snippet = '', int $collectionId = 1): array => ['id' => $id, 'collectionId' => $collectionId, 'title' => 'Статья '.$id, 'snippet' => $snippet, 'score' => 1.0];
 
@@ -17,7 +18,7 @@ $note = new FakeNote();
 $note->searchAnswers['настро квот'] = [$hit(1, '<b>Квота</b> расхода'), $hit(2)];
 $found = KbSearchService::findWith($note, 'Как настроить квоту?', 2);
 Check::same('в note ушли основы без стоп-слов, с лимитом', $note->calls, ['search настро квот 2']);
-Check::same('форма ответа', $found[0], ['id' => 1, 'title' => 'Статья 1', 'url' => '/note/document/1/', 'noteUrl' => '/note/document/1/', 'snippet' => 'Квота расхода']);
+Check::same('форма ответа; без индекса text = snippet', $found[0], ['id' => 1, 'title' => 'Статья 1', 'url' => '/note/document/1/', 'noteUrl' => '/note/document/1/', 'snippet' => 'Квота расхода', 'text' => 'Квота расхода']);
 Check::same('две статьи', count($found), 2);
 
 Check::group('добор по словам');
@@ -74,5 +75,31 @@ Check::same('от лимита', KbSearchService::cacheKey(1, 'q', 5, 12) === Kb
 Check::same('от области', KbSearchService::cacheKey(1, 'q', 5, 12) === KbSearchService::cacheKey(1, 'q', 5, null), false);
 Check::same('от запроса', KbSearchService::cacheKey(1, 'q', 5, 12) === KbSearchService::cacheKey(1, 'w', 5, 12), false);
 Check::same('одинаковый — одинаковый', KbSearchService::cacheKey(1, 'q', 5, 12), KbSearchService::cacheKey(1, 'q', 5, 12));
+
+Check::group('с индексом фрагментов (1.3.0)');
+
+$index = Bm25Index::build([
+	['documentId' => 5, 'title' => 'Распознавание', 'heading' => '', 'text' => 'Квота упоминается мимоходом.'],
+	['documentId' => 7, 'title' => 'Квота', 'heading' => '', 'text' => 'Вступление.'],
+	['documentId' => 7, 'title' => 'Квота', 'heading' => 'Как настроить', 'text' => 'Квоту задают в настройках модуля: сумма в месяц.'],
+	['documentId' => 7, 'title' => 'Квота', 'heading' => 'История', 'text' => 'Раньше квоты не было.'],
+	['documentId' => 9, 'title' => 'Закрытая', 'heading' => '', 'text' => 'Как настроить квоту для руководства.'],
+]);
+$note = new FakeNote();
+$note->searchAnswers['настро квот'] = [$hit(5, 'точное'), $hit(1, 'чужой раздел')];
+$note->searchAnswers['настро'] = [$hit(7)];
+$note->searchAnswers['квот'] = [$hit(7), $hit(5)];
+$found = KbSearchService::findWith($note, 'Как настроить квоту?', 2, null, null, $index);
+Check::same('кандидаты с запасом, добор по словам всегда', $note->calls, ['search настро квот 20', 'search настро 20', 'search квот 20']);
+Check::same('порядок — BM25, документ вне индекса — после; недоступный (9) не появляется', array_column($found, 'id'), [7, 5]);
+Check::same('text — лучшие фрагменты в порядке статьи, с разделами', $found[0]['text'], "Вступление.\n\n## Как настроить\nКвоту задают в настройках модуля: сумма в месяц.\n\n## История\nРаньше квоты не было.");
+Check::same('нет сниппета note — из лучшего фрагмента', $found[0]['snippet'], 'Квоту задают в настройках модуля: сумма в месяц.');
+$all = KbSearchService::findWith($note, 'Как настроить квоту?', 5, null, null, $index);
+Check::same('вне индекса — сниппет note в text', [end($all)['id'], end($all)['text']], [1, 'чужой раздел']);
+$note->calls = [];
+KbSearchService::findWith($note, 'Как настроить квоту?', 2, 1, null, $index);
+Check::same('свой раздел — запас ×4', $note->calls[0], 'search настро квот 80');
+Check::same('text не длиннее TEXT_MAX', mb_strlen(KbSearchService::fragmentsText([['heading' => 'А', 'text' => str_repeat('я', 3000)]])), KbSearchService::TEXT_MAX);
+Check::same('ключ кеша зависит от метки индекса', KbSearchService::cacheKey(1, 'q', 5, 1, 'a') !== KbSearchService::cacheKey(1, 'q', 5, 1, 'b'), true);
 
 Check::finish();

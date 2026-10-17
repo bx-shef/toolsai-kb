@@ -29,6 +29,14 @@
 
 На портале stuttgart — 1.2.0 (выкладка 3.72).
 
+## Сделано (1.3.0)
+
+- индекс фрагментов (лексический RAG): статьи раздела режутся по заголовкам,
+  BM25 ранжирует кандидатов из поиска `note`, в `text` — лучшие фрагменты для
+  модели. Подбор разделов справки в shef.toolsai (`Kb\Rag`) снят — поиск
+  статей только здесь.
+- Нужно от shef.toolsaiassistant: брать `text` вместо `snippet` (сделано там же).
+
 ## Связи
 
 - shef.toolsai отдаёт пакет справки `shef.toolsai:guide` (обработчик
@@ -48,7 +56,7 @@
 | `shef.toolsai` | [bx-shef/toolsai](https://github.com/bx-shef/toolsai) | 1.58.0 | `shef.options`, `shef.problems`; модули ядра `ai`, `crm` — проверка в установщике | — |
 | `shef.toolsaiassistant` | [bx-shef/toolsai-assistant](https://github.com/bx-shef/toolsai-assistant) | 1.6.0 | `shef.options`, `shef.problems`, `shef.toolsai` (модель, квота, журнал расхода, реестр промптов, история записи) | `shef.toolsaikb` — поиск статей для ответа |
 | `shef.toolsaiannounce` | [bx-shef/toolsai-announce](https://github.com/bx-shef/toolsai-announce) | 1.4.1 | `shef.options`, `shef.problems` | — |
-| `shef.toolsaikb` | [bx-shef/toolsai-kb](https://github.com/bx-shef/toolsai-kb) | 1.2.0 | `shef.options`, `shef.problems`; модуль ядра `note` 26.250.0+ — проверка в установщике | — |
+| `shef.toolsaikb` | [bx-shef/toolsai-kb](https://github.com/bx-shef/toolsai-kb) | 1.3.0 | `shef.options`, `shef.problems`; модуль ядра `note` 26.250.0+ — проверка в установщике | — |
 
 | событие | кто шлёт | кто отвечает | что передаёт |
 |---|---|---|---|

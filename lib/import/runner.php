@@ -7,13 +7,18 @@ use Shef\Options\Main\Constants as OptionsConstants;
 use Shef\Options\Main\TempFile\Pid;
 use Shef\ToolsAiKb\Main\Constants;
 use Shef\ToolsAiKb\Main\ProblemLogger;
+use Shef\ToolsAiKb\Model\ChunkStoreOrm;
+use Shef\ToolsAiKb\Model\ChunkTable;
 use Shef\ToolsAiKb\Model\MappingStoreOrm;
 use Shef\ToolsAiKb\Model\MappingTable;
 use Shef\ToolsAiKb\Note\BitrixNoteGateway;
+use Shef\ToolsAiKb\Note\NoteGateway;
+use Shef\ToolsAiKb\Search\ChunkStore;
+use Shef\ToolsAiKb\Search\IndexBuilder;
 
 /**
- * Один прогон импорта на портале: блокировка, сбор пакетов, импорт, итог в
- * настройки, ошибки в журнал. Его зовут агент, кнопка «Обновить статьи» и
+ * Один прогон импорта на портале: блокировка, сбор пакетов, импорт,
+ * пересборка индекса фрагментов для поиска (1.3.0), итог в настройки, ошибки в журнал. Его зовут агент, кнопка «Обновить статьи» и
  * установщик.
  *
  * Автор раздела и документов — служебный пользователь shef.options
@@ -60,7 +65,8 @@ final class Runner
 		{
 			// Обновление модуля без переустановки: колонка VIEW_URL появляется здесь
 			MappingTable::init();
-			$importer = new Importer(new BitrixNoteGateway(), new MappingStoreOrm(), OptionsConstants::getSystemUserId());
+			$note = new BitrixNoteGateway();
+			$importer = new Importer($note, new MappingStoreOrm(), OptionsConstants::getSystemUserId());
 			$report = $importer->run(
 				$collected['sources'],
 				(int)Option::get(Constants::MODULE_ID, Constants::OPTION_COLLECTION_ID, '0'),
@@ -69,6 +75,13 @@ final class Runner
 				// Сбор с ошибками — пропажа пакета может быть сбоем: пропавшие пакеты не удаляем
 				$collected['errors'] === []
 			);
+			// Обновление без переустановки: таблица фрагментов появляется здесь
+			ChunkTable::init();
+			$version = static::reindex($report, $note, new ChunkStoreOrm());
+			if($version !== null)
+			{
+				Option::set(Constants::MODULE_ID, Constants::OPTION_INDEX_VERSION, $version);
+			}
 		}
 		catch(\Throwable $throwable)
 		{
@@ -83,6 +96,34 @@ final class Runner
 		}
 
 		return $report;
+	}
+
+	/**
+	 * Пересобрать индекс фрагментов по разделу отчёта. Сбой индекса импорт не
+	 * отменяет: он в ошибках отчёта, поиск остаётся на прежнем индексе.
+	 *
+	 * @return string|null новая метка индекса; null — не пересобран (раздела нет, сбой)
+	 */
+	public static function reindex(ImportReport $report, NoteGateway $note, ChunkStore $store): ?string
+	{
+		if($report->collectionId <= 0)
+		{
+			return null;
+		}
+		try
+		{
+			$built = (new IndexBuilder($note, $store))->rebuild($report->collectionId);
+		}
+		catch(\Throwable $throwable)
+		{
+			$report->errors[] = 'индекс поиска не пересобран: '.$throwable->getMessage();
+
+			return null;
+		}
+		$report->indexChunks = $built['chunks'];
+		$report->errors = array_merge($report->errors, $built['errors']);
+
+		return date('YmdHis').'.'.$built['chunks'];
 	}
 
 	/**
