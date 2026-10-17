@@ -1,0 +1,190 @@
+[
+ {
+  "id": "toolsai-guide-01",
+  "question": "Зачем модуль, если в Битрикс24 уже есть BitrixGPT?",
+  "expect": [
+   "engine"
+  ]
+ },
+ {
+  "id": "toolsai-guide-02",
+  "question": "Почему эндпоинт отвечает 202, а не 200?",
+  "expect": [
+   "engine"
+  ]
+ },
+ {
+  "id": "toolsai-guide-03",
+  "question": "Где хранится токен эндпоинта и как его сменить?",
+  "expect": [
+   "engine",
+   "settings"
+  ]
+ },
+ {
+  "id": "toolsai-guide-04",
+  "question": "Как задать отдельный адрес и ключ для распознавания?",
+  "expect": [
+   "endpoints",
+   "settings"
+  ]
+ },
+ {
+  "id": "toolsai-guide-05",
+  "question": "Как считается расход на распознавание звонка?",
+  "expect": [
+   "transcription",
+   "quota-ledger"
+  ]
+ },
+ {
+  "id": "toolsai-guide-06",
+  "question": "Зачем включать свои промпты?",
+  "expect": [
+   "own-prompts",
+   "settings"
+  ]
+ },
+ {
+  "id": "toolsai-guide-07",
+  "question": "Почему поля сделки не заполняются, PAYLOAD_IS_EMPTY?",
+  "expect": [
+   "own-prompts"
+  ]
+ },
+ {
+  "id": "toolsai-guide-08",
+  "question": "Как CRM считает процент оценки звонка по скрипту?",
+  "expect": [
+   "call-scoring"
+  ]
+ },
+ {
+  "id": "toolsai-guide-09",
+  "question": "Когда анализ сделок ставит дело старшему?",
+  "expect": [
+   "deal-analysis"
+  ]
+ },
+ {
+  "id": "toolsai-guide-10",
+  "question": "Что такое тотальный контроль в профиле анализа сделок?",
+  "expect": [
+   "deal-analysis"
+  ]
+ },
+ {
+  "id": "toolsai-guide-11",
+  "question": "Как оценивается переписка в чатах открытых линий?",
+  "expect": [
+   "chats"
+  ]
+ },
+ {
+  "id": "toolsai-guide-12",
+  "question": "Как работает контроль скорости ответа на письма?",
+  "expect": [
+   "emails"
+  ]
+ },
+ {
+  "id": "toolsai-guide-13",
+  "question": "Что показывает раздел «Статистика»?",
+  "expect": [
+   "stats"
+  ]
+ },
+ {
+  "id": "toolsai-guide-14",
+  "question": "Что будет при исчерпании месячной квоты?",
+  "expect": [
+   "quota-ledger",
+   "settings"
+  ]
+ },
+ {
+  "id": "toolsai-guide-15",
+  "question": "Что делает кнопка Проверить и включить?",
+  "expect": [
+   "settings",
+   "engine",
+   "limits-bitrix"
+  ]
+ },
+ {
+  "id": "toolsai-guide-16",
+  "question": "Как выбрать движок модуля в настройках ИИ портала?",
+  "expect": [
+   "settings",
+   "engine",
+   "copilot-chain"
+  ]
+ },
+ {
+  "id": "toolsai-guide-17",
+  "question": "Что сверять в цепочке BitrixGPT после обновления Битрикс24?",
+  "expect": [
+   "copilot-chain"
+  ]
+ },
+ {
+  "id": "toolsai-guide-18",
+  "question": "Что такое обход BaaS и лимиты Битрикса на коробке?",
+  "expect": [
+   "limits-bitrix"
+  ]
+ },
+ {
+  "id": "toolsai-guide-19",
+  "question": "Какие провайдеры поддерживает модуль и можно ли свой whisper-сервер?",
+  "expect": [
+   "endpoints",
+   "transcription"
+  ]
+ },
+ {
+  "id": "toolsai-guide-20",
+  "question": "Что увидит менеджер в карточке сделки после анализа?",
+  "expect": [
+   "staff-memo",
+   "deal-analysis"
+  ]
+ },
+ {
+  "id": "toolsai-guide-22",
+  "question": "Где в портале открыть настройки модуля?",
+  "expect": [
+   "public-settings",
+   "settings"
+  ]
+ },
+ {
+  "id": "toolsai-guide-23",
+  "question": "Как анализировать лиды и смарт-процессы?",
+  "expect": [
+   "leads-smart",
+   "analysis-block"
+  ]
+ },
+ {
+  "id": "toolsai-guide-24",
+  "question": "Что будет с полями ИИ при конвертации лида в сделку?",
+  "expect": [
+   "leads-smart"
+  ]
+ },
+ {
+  "id": "toolsai-guide-25",
+  "question": "Как задать свой шаблон промпта анализа для одной воронки?",
+  "expect": [
+   "analysis-prompts"
+  ]
+ },
+ {
+  "id": "toolsai-guide-26",
+  "question": "Распознаются ли звонки сторонней АТС?",
+  "expect": [
+   "transcription"
+  ]
+ }
+]

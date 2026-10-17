@@ -34,6 +34,7 @@
 | доступ к `note` | `lib/note/bitrixnotegateway.php` (только `Bitrix\Note\Public\…`) |
 | разбор вопроса | `lib/search/querynormalizer.php` — перенос `Rag::tokens()` shef.toolsai |
 | индекс фрагментов (RAG, 1.3.0) | `lib/search/` — `Chunker`, `Bm25Index`, `IndexBuilder`; таблица `lib/model/chunktable.php`; пересборка — `Runner::reindex()` |
+| замер поиска (hit@k, MRR) без портала | `tools/retrieval-eval.php`, `tools/retrievaleval/lib.php`, кейсы `tools/retrieval-evals/`; в поставку не идёт |
 | таблица соответствий | `lib/model/mappingtable.php` |
 | ajax | `lib/controller/search.php` -> `shef:toolsaikb.search.find` |
 | пункт в меню шестерёнки вида «ИИ» (shef.toolsai:OnViewSettingsMenuBuild, 1.1.2) | `lib/internals/integration/toolsai/eventhandler/onviewsettingsmenubuildeventhandler.php`; подписки после обновления копированием — `lib/main/maintenance.php` |
