@@ -234,11 +234,13 @@ final class Importer
 		$label = $row['sourceCode'].($row['path'] !== '' ? '/'.$row['path'] : '');
 		try
 		{
-			$action = Planner::decideObsolete($row['hash'], $this->note->getDocument($row['documentId']));
+			$document = $this->note->getDocument($row['documentId']);
+			$action = Planner::decideObsolete($row['hash'], $document);
 			switch($action)
 			{
 				case Planner::MANUAL:
 					$report->kept[] = $label.': нет в пакете, но правлена руками — оставлена';
+					$report->manualItems[] = ['label' => $label, 'title' => (string)($document['title'] ?? ''), 'documentId' => $row['documentId']];
 					$report->count(self::OBSOLETE_KEPT);
 
 					return false;
@@ -323,6 +325,7 @@ final class Importer
 
 				case Planner::MANUAL:
 					$report->manual[] = $label;
+					$report->manualItems[] = ['label' => $label, 'title' => (string)($document['title'] ?? ''), 'documentId' => $mapped['documentId']];
 					$report->count($action);
 
 					return $mapped['documentId'];
