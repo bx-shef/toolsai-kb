@@ -13,12 +13,14 @@ final class Source
 	 * @param string $title название раздела в «Базе знаний»
 	 * @param string $dir абсолютный путь к каталогу со статьями `*.md`
 	 * @param string $moduleId модуль, который отдал пакет
+	 * @param string $viewUrl шаблон адреса статьи в шаблоне модуля (ViewUrl); '' — нет
 	 */
 	public function __construct(
 		public readonly string $code,
 		public readonly string $title,
 		public readonly string $dir,
 		public readonly string $moduleId,
+		public readonly string $viewUrl = '',
 	)
 	{
 	}

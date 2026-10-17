@@ -10,10 +10,13 @@ if(\Bitrix\Main\Loader::includeModule('shef.toolsaikb'))
 ```
 
 `find(string $query, int $limit = 5): array` — список
-`['id' => int, 'title' => string, 'url' => string, 'snippet' => string]`:
+`['id' => int, 'title' => string, 'url' => string, 'noteUrl' => string, 'snippet' => string]`:
 
 - `id` — документ `note`;
-- `url` — от корня портала, `/note/document/<id>/`;
+- `url` — от корня портала: адрес статьи в родном шаблоне модуля, если её пакет
+  отдал `viewUrl` ([событие](03-events.md#куда-ведёт-ссылка-статьи)) и статью
+  не правили руками; иначе `/note/document/<id>/`;
+- `noteUrl` — всегда документ `note`, `/note/document/<id>/` (с 1.2.0);
 - `snippet` — простой текст до 300 символов (теги подсветки сняты);
 - `$limit` приводится к 1..20;
 - `title` и `snippet` — простой текст без экранирования: в HTML выводите через `htmlspecialcharsbx()` / `BX.util.htmlspecialchars()`.

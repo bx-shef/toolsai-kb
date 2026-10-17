@@ -123,17 +123,34 @@ final class FakeNote implements NoteGateway
 
 final class FakeMapping implements MappingStore
 {
-	/** @var array<string, array{documentId: int, hash: string}> */
+	/** @var array<string, array{documentId: int, hash: string, viewUrl: string}> */
 	public array $rows = [];
+	/** @var list<string> записи save() — тест видит, что импорт писал */
+	public array $saves = [];
 
 	public function get(string $sourceCode, string $path): ?array
 	{
 		return $this->rows[$sourceCode.'|'.$path] ?? null;
 	}
 
-	public function save(string $sourceCode, string $path, int $documentId, string $hash): void
+	public function save(string $sourceCode, string $path, int $documentId, string $hash, string $viewUrl = ''): void
 	{
-		$this->rows[$sourceCode.'|'.$path] = ['documentId' => $documentId, 'hash' => $hash];
+		$this->rows[$sourceCode.'|'.$path] = ['documentId' => $documentId, 'hash' => $hash, 'viewUrl' => $viewUrl];
+		$this->saves[] = $sourceCode.'|'.$path;
+	}
+
+	public function viewUrls(array $documentIds): array
+	{
+		$out = [];
+		foreach($this->rows as $row)
+		{
+			if(in_array($row['documentId'], $documentIds, true) && ($row['viewUrl'] ?? '') !== '')
+			{
+				$out[$row['documentId']] = $row['viewUrl'];
+			}
+		}
+
+		return $out;
 	}
 
 	public function all(): array

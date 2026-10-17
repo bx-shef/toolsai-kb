@@ -29,7 +29,7 @@
 |---|---|
 | публичный поиск | `lib/public/service/kbsearchservice.php` |
 | событие сбора пакетов | `lib/public/event/onkbsourcescollectevent.php` |
-| импорт (чистая логика) | `lib/import/` — `Planner`, `Importer`, `ArticleParser`, `SourceValidator`, `SourceReader` |
+| импорт (чистая логика) | `lib/import/` — `Planner`, `Importer`, `ArticleParser`, `SourceValidator`, `SourceReader`, `ViewUrl` (адрес статьи в шаблоне модуля) |
 | импорт на портале | `lib/import/runner.php`, агент `lib/agent/refresh.php` |
 | доступ к `note` | `lib/note/bitrixnotegateway.php` (только `Bitrix\Note\Public\…`) |
 | разбор вопроса | `lib/search/querynormalizer.php` — перенос `Rag::tokens()` shef.toolsai |

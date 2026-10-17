@@ -5,7 +5,9 @@ namespace Shef\ToolsAiKb\Public\Service;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Engine\CurrentUser;
+use Shef\ToolsAiKb\Import\MappingStore;
 use Shef\ToolsAiKb\Main\Constants;
+use Shef\ToolsAiKb\Model\MappingStoreOrm;
 use Shef\ToolsAiKb\Note\BitrixNoteGateway;
 use Shef\ToolsAiKb\Note\NoteGateway;
 use Shef\ToolsAiKb\Search\QueryNormalizer;
@@ -32,6 +34,11 @@ use Shef\ToolsAiKb\Search\ResultMerger;
  * документы со всеми словами сразу; набралось меньше $limit — добирается
  * поиском по каждому из трёх самых длинных слов, списки сводятся
  * (ResultMerger). Ответ держится в кеше 60 секунд на пользователя и запрос.
+ *
+ * Ссылка статьи (`url`): если пакет статьи отдал `viewUrl` (событие
+ * OnKbSourcesCollect), — адрес статьи в родном шаблоне модуля; иначе — документ
+ * `note`. Правленная руками в `note` статья всегда ведёт в `note`: там
+ * актуальный текст. Адрес документа `note` всегда есть в `noteUrl`.
  */
 final class KbSearchService
 {
@@ -44,9 +51,11 @@ final class KbSearchService
 	/**
 	 * @param string $query вопрос как есть, по-русски
 	 * @param int $limit сколько статей вернуть, 1..20
-	 * @return list<array{id: int, title: string, url: string, snippet: string}>
-	 *         id — документ `note`, url — адрес от корня портала (`/note/document/<id>/`),
-	 *         title и snippet — простой текст без экранирования (snippet — до 300 символов)
+	 * @return list<array{id: int, title: string, url: string, noteUrl: string, snippet: string}>
+	 *         id — документ `note`; url — адрес от корня портала: статья в шаблоне
+	 *         модуля (viewUrl пакета) или документ `note`; noteUrl — всегда документ
+	 *         `note` (`/note/document/<id>/`); title и snippet — простой текст без
+	 *         экранирования (snippet — до 300 символов)
 	 */
 	public static function find(string $query, int $limit = 5): array
 	{
@@ -78,7 +87,7 @@ final class KbSearchService
 				return $vars;
 			}
 		}
-		$found = static::findWith(new BitrixNoteGateway(), $query, $limit, $collectionId);
+		$found = static::findWith(new BitrixNoteGateway(), $query, $limit, $collectionId, new MappingStoreOrm());
 		if($cache->startDataCache())
 		{
 			$cache->endDataCache($found);
@@ -111,9 +120,10 @@ final class KbSearchService
 	 * То же на заданной «Базе знаний», без кеша — для тестов и своих сценариев.
 	 *
 	 * @param int|null $collectionId только этот раздел; null — вся «База знаний»
-	 * @return list<array{id: int, title: string, url: string, snippet: string}>
+	 * @param MappingStore|null $mapping откуда брать адреса в шаблоне модуля; null — все ссылки на `note`
+	 * @return list<array{id: int, title: string, url: string, noteUrl: string, snippet: string}>
 	 */
-	public static function findWith(NoteGateway $note, string $query, int $limit = 5, ?int $collectionId = null): array
+	public static function findWith(NoteGateway $note, string $query, int $limit = 5, ?int $collectionId = null, ?MappingStore $mapping = null): array
 	{
 		$limit = max(1, min(self::MAX_LIMIT, $limit));
 		$terms = QueryNormalizer::terms($query);
@@ -137,14 +147,30 @@ final class KbSearchService
 			}
 		}
 
+		$merged = ResultMerger::merge($exact, $perTerm, $limit);
+		$viewUrls = [];
+		if($mapping !== null && $merged !== [])
+		{
+			try
+			{
+				$viewUrls = $mapping->viewUrls(array_map(static fn(array $hit): int => (int)$hit['id'], $merged));
+			}
+			catch(\Throwable)
+			{
+				// Таблица недоступна — ссылки на `note`, поиск не падает
+				$viewUrls = [];
+			}
+		}
+
 		return array_map(
 			static fn(array $hit): array => [
 				'id' => $hit['id'],
 				'title' => $hit['title'],
-				'url' => Constants::documentUrl($hit['id']),
+				'url' => $viewUrls[(int)$hit['id']] ?? Constants::documentUrl($hit['id']),
+				'noteUrl' => Constants::documentUrl($hit['id']),
 				'snippet' => ResultMerger::plainSnippet($hit['snippet']),
 			],
-			ResultMerger::merge($exact, $perTerm, $limit)
+			$merged
 		);
 	}
 
