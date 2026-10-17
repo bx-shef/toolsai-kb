@@ -8,8 +8,9 @@
  * * requirePhpExt -> обязательные расширения PHP
  * * registerAutoLoadClasses, registerNamespace -> чужих классов нет; свои
  *   (Shef\ToolsAiKb\...) ядро находит в lib/ по соглашению, путь строчными
- * * installEvents -> пусто: модуль сам ни на что не подписан, он отправляет
- *   событие OnKbSourcesCollect
+ * * installEvents -> постоянные подписки (1.1.2): пункт «ИИ база знаний» в меню
+ *   шестерёнки вида «ИИ» shef.toolsai. Ставит установщик и Main\Maintenance
+ *   (обновление копированием), снимает удаление
  * * installDir -> пусто: публичных файлов нет
  * * controllers -> ajax: BX.ajax.runAction('shef:toolsaikb.search.find')
  *   -> Shef\ToolsAiKb\Controller\Search::findAction()
@@ -46,7 +47,18 @@ return [
 		'readonly' => true,
 	],
 	'installEvents' => [
-		'value' => [],
+		'value' => [
+			[
+				'isCompatible' => false,
+				'from' => ['module' => 'shef.toolsai', 'event' => 'OnViewSettingsMenuBuild'],
+				'to' => [
+					'module' => 'shef.toolsaikb',
+					'class' => '\\Shef\\ToolsAiKb\\Internals\\Integration\\ToolsAi\\EventHandler\\OnViewSettingsMenuBuildEventHandler',
+					'function' => 'handle',
+					'sort' => 100,
+				],
+			],
+		],
 		'readonly' => true,
 	],
 	'installDir' => [

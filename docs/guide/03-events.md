@@ -78,3 +78,16 @@ final class OnKbSourcesCollectEventHandler
 
 Код пакета — это ключ в таблице соответствий: сменить его — значит получить
 новый пакет рядом со старым.
+
+## Подписки модуля
+
+Сам модуль подписан на одно событие (1.1.2):
+
+| событие | ответ shef.toolsaikb |
+|---|---|
+| `shef.toolsai:OnViewSettingsMenuBuild` (shef.toolsai 1.53.0) | пункт «ИИ база знаний» в меню шестерёнки вида «ИИ» — ссылка на страницу настроек модуля, только при праве на модуль от R |
+
+Обработчик — `Internals\Integration\ToolsAi\EventHandler\OnViewSettingsMenuBuildEventHandler`,
+принимает `Main\Event`: нет shef.toolsai 1.53 — событие никто не шлёт. Подписку
+ставят установщик и `Main\Maintenance` (обновление копированием), снимает
+удаление — см. [установку](05-install.md).
