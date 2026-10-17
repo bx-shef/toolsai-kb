@@ -22,6 +22,8 @@ Loc::loadMessages(__FILE__);
  *
  *   1) таблица соответствий статей и документов (Model\MappingTable);
  *   2) агент «Обновить статьи» раз в сутки (Agent\Refresh);
+ *   2а) подписки из installEvents (.settings.php, 1.1.2) — пункт в меню
+ *      шестерёнки вида «ИИ»; снимает удаление;
  *   3) первый импорт (Import\Runner): раздел «ИИ: База знаний» и статьи модулей,
  *      которые уже отвечают на OnKbSourcesCollect.
  *
@@ -149,6 +151,60 @@ class shef_toolsaikb
 		UnRegisterModule($this->MODULE_ID);
 
 		$GLOBALS['CACHE_MANAGER']->CleanAll();
+
+		return true;
+	}
+	// endregion ////
+
+	// region Events ////
+	/**
+	 * Постоянные подписки из installEvents (.settings.php).
+	 *
+	 * @return list<array>
+	 */
+	private function getEventsList(): array
+	{
+		$list = Config\Configuration::getInstance($this->MODULE_ID)->get('installEvents');
+
+		return is_array($list) ? $list : [];
+	}
+
+	public function InstallEvents(): bool
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		foreach($this->getEventsList() as $event)
+		{
+			$method = !empty($event['isCompatible']) ? 'registerEventHandlerCompatible' : 'registerEventHandler';
+			$eventManager->{$method}(
+				$event['from']['module'],
+				$event['from']['event'],
+				$event['to']['module'],
+				$event['to']['class'],
+				$event['to']['function'],
+				(int)($event['to']['sort'] ?? 100)
+			);
+		}
+
+		return true;
+	}
+
+	/** Снять те же подписки: класс — с «\\» и без (ядро хранит как передали). */
+	public function UnInstallEvents(): bool
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		foreach($this->getEventsList() as $event)
+		{
+			foreach(array_unique([$event['to']['class'], ltrim($event['to']['class'], '\\')]) as $class)
+			{
+				$eventManager->unRegisterEventHandler(
+					$event['from']['module'],
+					$event['from']['event'],
+					$event['to']['module'],
+					$class,
+					$event['to']['function']
+				);
+			}
+		}
 
 		return true;
 	}
@@ -291,6 +347,7 @@ class shef_toolsaikb
 		{
 			$this->InstallDB();
 			$this->InstallFiles();
+			$this->InstallEvents();
 			$this->InstallAgent();
 
 			$this->ShowForm(
@@ -324,6 +381,7 @@ class shef_toolsaikb
 			);
 		}
 		$this->UnInstallAgent();
+		$this->UnInstallEvents();
 		$this->UnInstallDB();
 	}
 

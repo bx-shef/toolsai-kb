@@ -32,6 +32,9 @@ final class Constants
 	public const SEARCH_CACHE_TTL = 60;
 
 	/** Агент импорта — раз в сутки. */
+	/** Страница настроек модуля (пункт в меню шестерёнки вида «ИИ», 1.1.2). */
+	public const SETTINGS_URL = '/bitrix/admin/settings.php?mid=shef.toolsaikb&lang=ru';
+
 	public const AGENT_NAME = '\\Shef\\ToolsAiKb\\Agent\\Refresh::run();';
 	public const AGENT_INTERVAL = 86400;
 

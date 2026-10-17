@@ -21,7 +21,7 @@ Check::same('зависимости линейки', $settings['requireModules']
 Check::same('все ключи readonly', array_unique(array_column($settings, 'readonly')), [true]);
 Check::same('контроллеры — Shef\ToolsAiKb\Controller', $settings['controllers']['value']['defaultNamespace'], '\\Shef\\ToolsAiKb\\Controller');
 Check::same('каталог контроллеров есть (иначе ajax — 404)', is_file($root.'/lib/controller/search.php'), true);
-Check::same('событий не ставит', $settings['installEvents']['value'], []);
+Check::same('подписки — только меню вида «ИИ» (viewsettingsmenu_test)', array_column(array_column($settings['installEvents']['value'], 'from'), 'event'), ['OnViewSettingsMenuBuild']);
 
 Check::group('установщик');
 
