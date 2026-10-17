@@ -41,4 +41,45 @@ final class MappingStoreOrm implements MappingStore
 			throw new \RuntimeException('соответствие не записано: '.implode('; ', $result->getErrorMessages()));
 		}
 	}
+
+	/** {@inheritDoc} */
+	public function all(): array
+	{
+		$out = [];
+		$rows = MappingTable::query()
+			->setSelect(['SOURCE_CODE', 'PATH', 'NOTE_DOCUMENT_ID', 'HASH'])
+			->setOrder(['ID' => 'ASC'])
+			->exec();
+		while($row = $rows->fetch())
+		{
+			$out[] = [
+				'sourceCode' => (string)$row['SOURCE_CODE'],
+				'path' => (string)$row['PATH'],
+				'documentId' => (int)$row['NOTE_DOCUMENT_ID'],
+				'hash' => (string)$row['HASH'],
+			];
+		}
+
+		return $out;
+	}
+
+	/** {@inheritDoc} */
+	public function delete(string $sourceCode, string $path): void
+	{
+		$row = MappingTable::query()
+			->setSelect(['ID'])
+			->where('SOURCE_CODE', $sourceCode)
+			->where('PATH', $path)
+			->setLimit(1)
+			->fetch();
+		if(!$row)
+		{
+			return;
+		}
+		$result = MappingTable::delete((int)$row['ID']);
+		if(!$result->isSuccess())
+		{
+			throw new \RuntimeException('соответствие не удалено: '.implode('; ', $result->getErrorMessages()));
+		}
+	}
 }

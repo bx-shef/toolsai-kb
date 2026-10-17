@@ -1,4 +1,4 @@
-# Документация shef.toolsaikb
+# Документация shef.toolsaikb — [SH] ИИ база знаний
 
 ## Для администратора и разработчика модулей — [guide/](guide/README.md)
 

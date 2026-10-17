@@ -21,6 +21,9 @@ final class ImportReport
 	/** @var list<string> статьи, которые не тронуты, потому что их поправили руками */
 	public array $manual = [];
 
+	/** @var list<string> пропавшие из пакетов статьи, которые оставлены, и почему */
+	public array $kept = [];
+
 	/** Учесть ещё одну статью с действием $action. */
 	public function count(string $action): void
 	{
@@ -45,6 +48,8 @@ final class ImportReport
 			'без изменений: '.$this->get(Planner::UNCHANGED),
 			'правлены руками (не тронуты): '.$this->get(Planner::MANUAL),
 			'в архиве (не тронуты): '.($this->get(Planner::ARCHIVED) + $this->get(Importer::REMOVED)),
+			'удалено в корзину: '.$this->get(Planner::DELETE),
+			'нет в пакете, оставлены: '.$this->get(Importer::OBSOLETE_KEPT),
 			'ошибок: '.count($this->errors),
 		];
 

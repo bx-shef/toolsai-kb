@@ -49,6 +49,15 @@ NoteStub::$overwriteThrows = new LogicException('другое');
 Check::throws('прочий сбой не маскируется', \Bitrix\Main\Command\Exception\CommandException::class, static fn() => $g->overwriteDocument($doc, 'Т', 'М', 7));
 NoteStub::$overwriteThrows = null;
 
+NoteStub::$deleteData = ['success' => true, 'trashedIds' => [$doc, 999]];
+Check::same('удаление: команда ядра от служебного пользователя', [$g->deleteDocument($doc, 7), end(NoteStub::$calls)], [[$doc, 999], ['delete', ['id' => $doc, 'userId' => 7]]]);
+NoteStub::$deleteData = ['success' => false];
+Check::same('нет документа или уже в корзине — пусто', $g->deleteDocument($doc, 7), []);
+NoteStub::$deleteData = null;
+
+NoteStub::$tree = [['id' => 1, 'parentId' => null, 'children' => [['id' => 2, 'parentId' => 1, 'children' => [['id' => 3, 'parentId' => 2, 'children' => []]]]]]];
+Check::same('дерево раздела — плоско: ID -> родитель', $g->getCollectionTree(5), [1 => null, 2 => 1, 3 => 2]);
+
 Check::group('поиск');
 
 NoteStub::$searchResults = [

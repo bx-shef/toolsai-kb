@@ -52,6 +52,10 @@ if(Loader::includeModule('shef.toolsaikb') && $APPLICATION->GetGroupRight('shef.
 			{
 				$details .= '<br><br>'.Loc::getMessage('SHEF_TOOLSAIKB_REFRESH_MANUAL').'<br>'.implode('<br>', array_map('htmlspecialcharsbx', $report->manual));
 			}
+			if($report->kept !== [])
+			{
+				$details .= '<br><br>'.Loc::getMessage('SHEF_TOOLSAIKB_REFRESH_KEPT').'<br>'.implode('<br>', array_map('htmlspecialcharsbx', $report->kept));
+			}
 			if($report->errors !== [])
 			{
 				$details .= '<br><br>'.Loc::getMessage('SHEF_TOOLSAIKB_REFRESH_ERRORS').'<br>'.implode('<br>', array_map('htmlspecialcharsbx', $report->errors));

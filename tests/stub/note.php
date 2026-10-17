@@ -21,6 +21,10 @@ namespace
 		/** @var list<object> */
 		public static array $searchResults = [];
 		public static ?\Throwable $overwriteThrows = null;
+		/** @var array|null ответ DeleteDocumentCommand (data) */
+		public static ?array $deleteData = null;
+		/** @var list<array> ответ TreeProvider::getTree() */
+		public static array $tree = [];
 		public static int $nextId = 100;
 
 		public static function reset(): void
@@ -118,6 +122,24 @@ namespace Bitrix\Note\Public\Command
 		}
 	}
 
+	/** Как в ядре: нет документа или он в корзине — data['success'] = false. */
+	class DeleteDocumentCommand
+	{
+		public function __construct(
+			private int $id,
+			private int $userId = 0,
+		)
+		{
+		}
+
+		public function run(): Result
+		{
+			\NoteStub::$calls[] = ['delete', get_object_vars($this)];
+
+			return (new Result())->setData(\NoteStub::$deleteData ?? ['success' => true, 'trashedIds' => [$this->id]]);
+		}
+	}
+
 	class OverwriteDocumentContentCommand
 	{
 		public function __construct(
@@ -140,6 +162,20 @@ namespace Bitrix\Note\Public\Command
 			}
 
 			return new Result();
+		}
+	}
+}
+
+namespace Bitrix\Note\Public\Provider
+{
+	/** Как в ядре: дерево раздела без проверки прав (узлы с children). */
+	class TreeProvider
+	{
+		public function getTree(int $collectionId): array
+		{
+			\NoteStub::$calls[] = ['tree', ['collectionId' => $collectionId]];
+
+			return \NoteStub::$tree;
 		}
 	}
 }

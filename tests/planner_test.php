@@ -24,4 +24,11 @@ Check::same('заголовок поправили руками — не тро�
 Check::same('открыли в редакторе (yjs) — не трогать', Planner::decide($new, $old, $doc(format: 'yjs')), Planner::MANUAL);
 Check::same('поправили руками, статья не менялась — тоже MANUAL', Planner::decide($old, $old, $doc(markdown: 'правка')), Planner::MANUAL);
 
+Check::group('статьи нет в пакете');
+Check::same('документ не трогали — удалить', Planner::decideObsolete($old, $doc()), Planner::DELETE);
+Check::same('документа нет — только соответствие', Planner::decideObsolete($old, null), Planner::GONE);
+Check::same('правлен руками — не трогать', Planner::decideObsolete($old, $doc(markdown: 'правка')), Planner::MANUAL);
+Check::same('открыт в редакторе — не трогать', Planner::decideObsolete($old, $doc(format: 'yjs')), Planner::MANUAL);
+Check::same('в архиве — не трогать', Planner::decideObsolete($old, $doc(archived: true)), Planner::ARCHIVED);
+
 Check::finish();

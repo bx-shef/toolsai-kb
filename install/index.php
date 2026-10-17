@@ -97,7 +97,7 @@ class shef_toolsaikb
 		$this->MODULE_DESCRIPTION = Loc::getMessage('shef.toolsaikb_MODULE_DESC');
 
 		$sort = 'MODULE_SORT';
-		$this->{$sort} = (int)'1020';
+		$this->{$sort} = (int)'1007';
 
 		$this->PARTNER_NAME = Loc::getMessage('shef.toolsaikb_PARTNER_NAME');
 		$this->PARTNER_URI = Loc::getMessage('shef.toolsaikb_PARTNER_URI');

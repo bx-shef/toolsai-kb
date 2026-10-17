@@ -8,3 +8,4 @@ $MESS['SHEF_TOOLSAIKB_REFRESH_DONE'] = 'Импорт статей выполне
 $MESS['SHEF_TOOLSAIKB_REFRESH_BUSY'] = 'Импорт уже идёт в другом процессе — попробуйте через минуту.';
 $MESS['SHEF_TOOLSAIKB_REFRESH_MANUAL'] = 'Не тронуты, потому что их поправили в «Базе знаний»:';
 $MESS['SHEF_TOOLSAIKB_REFRESH_ERRORS'] = 'Ошибки:';
+$MESS['SHEF_TOOLSAIKB_REFRESH_KEPT'] = 'Нет в пакетах, но оставлены (или удалены вместе с вложенными):';

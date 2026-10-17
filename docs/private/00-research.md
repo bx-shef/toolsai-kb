@@ -27,3 +27,15 @@
 Документация Битрикса (`framework-docs`): события D7 — правило
 `bitrix-best-practice-core/rules/event.md`, контроллеры — `controller.md`,
 ORM — `bitrix-best-practice-sql`.
+
+## Удаление пропавших статей (1.1.0)
+
+- `lib/Public/Command/DeleteDocumentCommand.php` — документ в корзину вместе
+  с дочерними (`MoveToRecycleBinService::moveSubtree`), снятие с поиска
+  (`SearchIndexService::deindexDocuments`); нет документа или он уже в
+  корзине — `data['success'] = false`, ошибки в `Result` нет. Прав не
+  проверяет — их проверяют контроллеры (`DocumentController`).
+- `lib/Public/Provider/TreeProvider.php::getTree()` — всё дерево раздела без
+  проверки прав (`DocumentRepository::getCollectionDocuments`: без архивных и
+  без корзины). По нему импорт проверяет, нет ли под удаляемым документом
+  документов, созданных людьми.

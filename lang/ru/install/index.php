@@ -1,5 +1,5 @@
 <?php
-$MESS['shef.toolsaikb_MODULE_NAME'] = '[SH] ИИ: База знаний';
+$MESS['shef.toolsaikb_MODULE_NAME'] = '[SH] ИИ база знаний';
 $MESS['shef.toolsaikb_MODULE_DESC'] = 'Статьи модулей линейки в «Базе знаний» Битрикс24 (модуль note): раздел «ИИ: База знаний», импорт пакетов статей без затирания ручных правок и поиск статей для других модулей.';
 $MESS['shef.toolsaikb_PARTNER_NAME'] = 'ИП Шевчик И.С.';
 $MESS['shef.toolsaikb_PARTNER_URI'] = 'https://bx-shef.by';
