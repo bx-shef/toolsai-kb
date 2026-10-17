@@ -21,6 +21,8 @@ namespace
 		/** @var list<object> */
 		public static array $searchResults = [];
 		public static ?\Throwable $overwriteThrows = null;
+		/** @var array|null ответ DeleteDocumentCommand (data) */
+		public static ?array $deleteData = null;
 		public static int $nextId = 100;
 
 		public static function reset(): void
@@ -115,6 +117,24 @@ namespace Bitrix\Note\Public\Command
 			]);
 
 			return (new Result())->setData(['document' => \NoteStub::$documents[$id]]);
+		}
+	}
+
+	/** Как в ядре: нет документа или он в корзине — data['success'] = false. */
+	class DeleteDocumentCommand
+	{
+		public function __construct(
+			private int $id,
+			private int $userId = 0,
+		)
+		{
+		}
+
+		public function run(): Result
+		{
+			\NoteStub::$calls[] = ['delete', get_object_vars($this)];
+
+			return (new Result())->setData(\NoteStub::$deleteData ?? ['success' => true, 'trashedIds' => [$this->id]]);
 		}
 	}
 

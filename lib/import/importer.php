@@ -16,9 +16,17 @@ use Shef\ToolsAiKb\Note\NoteGateway;
  *  3. Каждая статья — по Planner: создать, перезаписать, не трогать.
  *     Соответствие и хэш записанного — в MappingStore.
  *
+ *  4. Статьи, которых больше нет в пакете, и пакеты, которых больше нет в
+ *     событии, — по Planner::decideObsolete(): документ уходит в корзину
+ *     `note` (восстановить можно оттуда), соответствие убирается. Правленный
+ *     руками и архивный документ не трогается — только строка в отчёте;
+ *     страница пакета с такими статьями тоже остаётся.
+ *
+ * Защита от сбоя: событие не вернуло ни одного пакета — ничего не удаляется;
+ * пакет прочитан с ошибками — его статьи не удаляются; сбор пакетов с
+ * ошибками ($pruneMissingSources = false) — пропавшие пакеты не удаляются.
+ *
  * Повторный прогон без изменений в пакетах ничего не пишет в `note`.
- * Статьи, которых больше нет в пакете, не удаляются: документ мог стать
- * чужим (его поправили, на него ссылаются).
  *
  * Сбой одной статьи не останавливает остальные — он в отчёте.
  *
@@ -28,6 +36,8 @@ final class Importer
 {
 	/** Документ оказался в корзине или в архиве при перезаписи. */
 	public const REMOVED = 'removed';
+	/** Статьи нет в пакете, но документ оставлен (правлен руками или в архиве). */
+	public const OBSOLETE_KEPT = 'obsolete_kept';
 
 	/** Текст документа-раздела пакета. */
 	public const SOURCE_PAGE_TEXT = 'Статьи раздела ниже. Раздел наполняется автоматически модулем #MODULE#: правка статьи в «Базе знаний» сохраняется, следующий импорт её не затрёт.';
@@ -51,8 +61,10 @@ final class Importer
 	 * @param string $collectionName название раздела, если его надо создать
 	 * @param null|callable(string): array{articles: list<Article>, errors: list<string>} $reader
 	 *        чтение пакета, по умолчанию SourceReader::read()
+	 * @param bool $pruneMissingSources удалять статьи пакетов, которых нет в событии;
+	 *        false — сбор пакетов прошёл с ошибками, пропажа может быть сбоем
 	 */
-	public function run(array $sources, int $collectionId, string $collectionName, ?callable $reader = null): ImportReport
+	public function run(array $sources, int $collectionId, string $collectionName, ?callable $reader = null, bool $pruneMissingSources = true): ImportReport
 	{
 		$reader ??= static fn(string $dir): array => SourceReader::read($dir);
 		$report = new ImportReport();
@@ -82,9 +94,19 @@ final class Importer
 		}
 		$report->collectionId = $collectionId;
 
+		/** @var array<string, bool> код пакета -> прочитан без ошибок */
+		$clean = [];
+		/** @var array<string, true> "код|путь" статей, которые есть в пакетах */
+		$present = [];
 		foreach($sources as $source)
 		{
 			$read = $reader($source->dir);
+			$clean[$source->code] = $read['errors'] === [];
+			$present[$source->code.'|'] = true;
+			foreach($read['articles'] as $article)
+			{
+				$present[$source->code.'|'.$article->path] = true;
+			}
 			foreach($read['errors'] as $error)
 			{
 				$report->errors[] = $source->code.': '.$error;
@@ -100,7 +122,122 @@ final class Importer
 			}
 		}
 
+		if($sources !== [])
+		{
+			$this->prune($report, $clean, $present, $pruneMissingSources);
+		}
+
 		return $report;
+	}
+
+	/**
+	 * Убрать в корзину документы статей, которых больше нет в пакетах.
+	 *
+	 * Сначала статьи пакета, потом его страница — и только если под ней не
+	 * осталось оставленных статей: ядро уносит в корзину документ вместе с
+	 * дочерними.
+	 *
+	 * @param array<string, bool> $clean код пакета из события -> прочитан без ошибок
+	 * @param array<string, true> $present "код|путь" статей из пакетов
+	 */
+	private function prune(ImportReport $report, array $clean, array $present, bool $pruneMissingSources): void
+	{
+		try
+		{
+			$rows = $this->mapping->all();
+		}
+		catch(\Throwable $throwable)
+		{
+			$report->errors[] = 'список соответствий не прочитан, пропавшие статьи не удалены: '.$throwable->getMessage();
+
+			return;
+		}
+
+		/** @var array<string, array{pages: list<array>, articles: list<array>}> $groups */
+		$groups = [];
+		foreach($rows as $row)
+		{
+			$code = $row['sourceCode'];
+			if(isset($present[$code.'|'.$row['path']]))
+			{
+				continue;
+			}
+			$known = array_key_exists($code, $clean);
+			if(($known && !$clean[$code]) || (!$known && !$pruneMissingSources))
+			{
+				continue;
+			}
+			$groups[$code][$row['path'] === '' ? 'pages' : 'articles'][] = $row;
+		}
+
+		foreach($groups as $code => $group)
+		{
+			$kept = 0;
+			foreach($group['articles'] ?? [] as $row)
+			{
+				$kept += $this->removeObsolete($report, $row) ? 0 : 1;
+			}
+			foreach($group['pages'] ?? [] as $row)
+			{
+				if($kept > 0)
+				{
+					$report->kept[] = $code.': страница пакета оставлена — под ней правленные руками или архивные статьи';
+					continue;
+				}
+				$this->removeObsolete($report, $row);
+			}
+		}
+	}
+
+	/**
+	 * Один пропавший документ по Planner::decideObsolete().
+	 *
+	 * @param array{sourceCode: string, path: string, documentId: int, hash: string} $row
+	 * @return bool true — документа больше нет (удалён или уже исчез), false — оставлен
+	 */
+	private function removeObsolete(ImportReport $report, array $row): bool
+	{
+		$label = $row['sourceCode'].($row['path'] !== '' ? '/'.$row['path'] : '');
+		try
+		{
+			$action = Planner::decideObsolete($row['hash'], $this->note->getDocument($row['documentId']));
+			switch($action)
+			{
+				case Planner::MANUAL:
+					$report->kept[] = $label.': нет в пакете, но правлена руками — оставлена';
+					$report->count(self::OBSOLETE_KEPT);
+
+					return false;
+
+				case Planner::ARCHIVED:
+					$report->kept[] = $label.': нет в пакете, документ в архиве — оставлен';
+					$report->count(self::OBSOLETE_KEPT);
+
+					return false;
+
+				case Planner::DELETE:
+					$trashed = $this->note->deleteDocument($row['documentId'], $this->authorId);
+					$extra = count(array_diff($trashed, [$row['documentId']]));
+					if($extra > 0)
+					{
+						$report->kept[] = $label.': вместе с ним в корзину ушли вложенные документы ('.$extra.') — восстановить можно из корзины';
+					}
+					$report->count($trashed === [] ? Planner::GONE : Planner::DELETE);
+					break;
+
+				default:
+					$report->count(Planner::GONE);
+			}
+			$this->mapping->delete($row['sourceCode'], $row['path']);
+
+			return true;
+		}
+		catch(\Throwable $throwable)
+		{
+			$report->errors[] = $label.': не удалён: '.$throwable->getMessage();
+
+			return false;
+		}
 	}
 
 	/**

@@ -61,7 +61,10 @@ final class Runner
 			$report = $importer->run(
 				$collected['sources'],
 				(int)Option::get(Constants::MODULE_ID, Constants::OPTION_COLLECTION_ID, '0'),
-				static::collectionName((string)Option::get(Constants::MODULE_ID, Constants::OPTION_COLLECTION_NAME, Constants::DEFAULT_COLLECTION_NAME))
+				static::collectionName((string)Option::get(Constants::MODULE_ID, Constants::OPTION_COLLECTION_NAME, Constants::DEFAULT_COLLECTION_NAME)),
+				null,
+				// Сбор с ошибками — пропажа пакета может быть сбоем: пропавшие пакеты не удаляем
+				$collected['errors'] === []
 			);
 		}
 		catch(\Throwable $throwable)
@@ -124,7 +127,7 @@ final class Runner
 		}
 		try
 		{
-			(new ProblemLogger())->warning('Импорт статей в «Базу знаний»: '.$report->summary(), ['errors' => $report->errors]);
+			(new ProblemLogger())->warning('Импорт статей в «Базу знаний»: '.$report->summary(), ['errors' => $report->errors, 'kept' => $report->kept]);
 		}
 		catch(\Throwable)
 		{

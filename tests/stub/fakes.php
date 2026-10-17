@@ -61,6 +61,32 @@ final class FakeNote implements NoteGateway
 		$this->calls[] = 'overwrite '.$documentId.' '.$title;
 	}
 
+	public bool $failDelete = false;
+
+	public function deleteDocument(int $documentId, int $userId): array
+	{
+		if($this->failDelete)
+		{
+			throw new RuntimeException('сбой удаления');
+		}
+		if(!isset($this->documents[$documentId]) || $this->documents[$documentId]['removed'])
+		{
+			return [];
+		}
+		$trashed = [];
+		foreach($this->documents as $id => $d)
+		{
+			if(!$d['removed'] && ($id === $documentId || $d['parentId'] === $documentId))
+			{
+				$this->documents[$id]['removed'] = true;
+				$trashed[] = $id;
+			}
+		}
+		$this->calls[] = 'delete '.$documentId.' by '.$userId;
+
+		return $trashed;
+	}
+
 	public function getDocument(int $documentId): ?array
 	{
 		$d = $this->documents[$documentId] ?? null;
@@ -94,5 +120,22 @@ final class FakeMapping implements MappingStore
 	public function save(string $sourceCode, string $path, int $documentId, string $hash): void
 	{
 		$this->rows[$sourceCode.'|'.$path] = ['documentId' => $documentId, 'hash' => $hash];
+	}
+
+	public function all(): array
+	{
+		$out = [];
+		foreach($this->rows as $key => $row)
+		{
+			[$sourceCode, $path] = explode('|', $key, 2);
+			$out[] = ['sourceCode' => $sourceCode, 'path' => $path] + $row;
+		}
+
+		return $out;
+	}
+
+	public function delete(string $sourceCode, string $path): void
+	{
+		unset($this->rows[$sourceCode.'|'.$path]);
 	}
 }

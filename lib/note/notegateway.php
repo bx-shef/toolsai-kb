@@ -41,6 +41,15 @@ interface NoteGateway
 	public function overwriteDocument(int $documentId, string $title, string $markdown, int $userId): void;
 
 	/**
+	 * Убрать документ в корзину `note` (с дочерними — так работает ядро);
+	 * из корзины его можно восстановить.
+	 *
+	 * @return list<int> ID документов, ушедших в корзину (сам и дочерние);
+	 *         пусто — документа уже нет или он уже в корзине
+	 */
+	public function deleteDocument(int $documentId, int $userId): array;
+
+	/**
 	 * Документ как он лежит сейчас, без проверки прав; null — документа нет.
 	 *
 	 * @return array{archived: bool, format: string, title: string, markdown: string}|null

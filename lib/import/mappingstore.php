@@ -17,4 +17,16 @@ interface MappingStore
 	 * Записать соответствие: документ и хэш того, что импорт в него записал.
 	 */
 	public function save(string $sourceCode, string $path, int $documentId, string $hash): void;
+
+	/**
+	 * Все соответствия.
+	 *
+	 * @return list<array{sourceCode: string, path: string, documentId: int, hash: string}>
+	 */
+	public function all(): array;
+
+	/**
+	 * Убрать соответствие (документ удалён или его больше нет).
+	 */
+	public function delete(string $sourceCode, string $path): void;
 }
