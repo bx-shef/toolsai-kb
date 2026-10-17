@@ -22,7 +22,7 @@ interface MappingStore
 	/**
 	 * Все соответствия.
 	 *
-	 * @return list<array{sourceCode: string, path: string, documentId: int, hash: string}>
+	 * @return list<array{sourceCode: string, path: string, documentId: int, hash: string, viewUrl: string}>
 	 */
 	public function all(): array;
 

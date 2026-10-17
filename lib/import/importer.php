@@ -240,6 +240,7 @@ final class Importer
 			switch($action)
 			{
 				case Planner::MANUAL:
+					$this->clearViewUrl($row);
 					$report->kept[] = $label.': нет в пакете, но правлена руками — оставлена';
 					$report->manualItems[] = ['label' => $label, 'title' => (string)($document['title'] ?? ''), 'documentId' => $row['documentId']];
 					$report->count(self::OBSOLETE_KEPT);
@@ -247,6 +248,7 @@ final class Importer
 					return false;
 
 				case Planner::ARCHIVED:
+					$this->clearViewUrl($row);
 					$report->kept[] = $label.': нет в пакете, документ в архиве — оставлен';
 					$report->count(self::OBSOLETE_KEPT);
 
@@ -367,6 +369,21 @@ final class Importer
 			return;
 		}
 		$this->mapping->save($source->code, $article->path, $mapped['documentId'], $mapped['hash'], $viewUrl);
+	}
+
+	/**
+	 * Статьи нет в пакете, документ оставлен — страницы в шаблоне модуля уже
+	 * нет: ссылка поиска должна вести в `note`. Адрес пуст — ничего не пишет.
+	 *
+	 * @param array{sourceCode: string, path: string, documentId: int, hash: string, viewUrl?: string} $row
+	 */
+	private function clearViewUrl(array $row): void
+	{
+		if(($row['viewUrl'] ?? '') === '')
+		{
+			return;
+		}
+		$this->mapping->save($row['sourceCode'], $row['path'], $row['documentId'], $row['hash'], '');
 	}
 
 	/**

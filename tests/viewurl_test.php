@@ -83,6 +83,24 @@ $importer->run([$source], 1, 'ИИ', $reader);
 Check::same('правлена руками — адрес убран', $map->get('shef.toolsai:guide', 'setup/quota.md')['viewUrl'], '');
 Check::same('остальные — по шаблону', $map->get('shef.toolsai:guide', 'b.md')['viewUrl'], '/kb/b');
 
+Check::group('Importer: статьи нет в пакете, документ оставлен');
+
+$n2 = new FakeNote();
+$m2 = new FakeMapping();
+$i2 = new Importer($n2, $m2, 7);
+$two = [ArticleParser::parse('x.md', "# Икс\nт"), ArticleParser::parse('y.md', "# Игрек\nт"), ArticleParser::parse('z.md', "# Зет\nт")];
+$i2->run([$source], 0, 'ИИ', static fn(string $d): array => ['articles' => $two, 'errors' => []]);
+$xId = $m2->get('shef.toolsai:guide', 'x.md')['documentId'];
+$yId = $m2->get('shef.toolsai:guide', 'y.md')['documentId'];
+$n2->documents[$xId]['markdown'] = 'правка руками';
+$n2->documents[$yId]['archived'] = true;
+$i2->run([$source], 1, 'ИИ', static fn(string $d): array => ['articles' => [$two[2]], 'errors' => []]);
+Check::same('правлена руками и пропала из пакета — адрес убран', $m2->get('shef.toolsai:guide', 'x.md')['viewUrl'] ?? null, '');
+Check::same('в архиве и пропала из пакета — адрес убран', $m2->get('shef.toolsai:guide', 'y.md')['viewUrl'] ?? null, '');
+$m2->saves = [];
+$i2->run([$source], 1, 'ИИ', static fn(string $d): array => ['articles' => [$two[2]], 'errors' => []]);
+Check::same('повтор — ничего не пишет', $m2->saves, []);
+
 Check::group('KbSearchService: url и noteUrl');
 
 $bId = $map->get('shef.toolsai:guide', 'b.md')['documentId'];

@@ -47,7 +47,7 @@ final class MappingStoreOrm implements MappingStore
 	{
 		$out = [];
 		$rows = MappingTable::query()
-			->setSelect(['SOURCE_CODE', 'PATH', 'NOTE_DOCUMENT_ID', 'HASH'])
+			->setSelect(['SOURCE_CODE', 'PATH', 'NOTE_DOCUMENT_ID', 'HASH', 'VIEW_URL'])
 			->setOrder(['ID' => 'ASC'])
 			->exec();
 		while($row = $rows->fetch())
@@ -57,6 +57,7 @@ final class MappingStoreOrm implements MappingStore
 				'path' => (string)$row['PATH'],
 				'documentId' => (int)$row['NOTE_DOCUMENT_ID'],
 				'hash' => (string)$row['HASH'],
+				'viewUrl' => (string)$row['VIEW_URL'],
 			];
 		}
 
