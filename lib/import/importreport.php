@@ -21,6 +21,9 @@ final class ImportReport
 	/** @var list<string> статьи, которые не тронуты, потому что их поправили руками */
 	public array $manual = [];
 
+	/** @var list<array{label: string, title: string, documentId: int}> правленные руками: путь, название, документ */
+	public array $manualItems = [];
+
 	/** @var list<string> пропавшие из пакетов статьи, которые оставлены, и почему */
 	public array $kept = [];
 
@@ -54,5 +57,24 @@ final class ImportReport
 		];
 
 		return implode(', ', $parts);
+	}
+
+	/**
+	 * Для сохранения итога (страница настроек): счётчики, правленные руками,
+	 * оставленные, ошибки и время прогона.
+	 *
+	 * @return array{at: string, collectionId: int, sources: int, counts: array<string, int>, manual: list<array{label: string, title: string, documentId: int}>, kept: list<string>, errors: list<string>}
+	 */
+	public function toArray(string $at): array
+	{
+		return [
+			'at' => $at,
+			'collectionId' => $this->collectionId,
+			'sources' => $this->sources,
+			'counts' => $this->counts,
+			'manual' => $this->manualItems,
+			'kept' => $this->kept,
+			'errors' => $this->errors,
+		];
 	}
 }

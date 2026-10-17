@@ -35,6 +35,7 @@
 | разбор вопроса | `lib/search/querynormalizer.php` — перенос `Rag::tokens()` shef.toolsai |
 | таблица соответствий | `lib/model/mappingtable.php` |
 | ajax | `lib/controller/search.php` -> `shef:toolsaikb.search.find` |
+| сводка импорта на странице настроек | `lib/settings/reportview.php`, вывод — `options.php` |
 
 ## Тесты
 

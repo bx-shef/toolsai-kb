@@ -46,7 +46,7 @@ final class Runner
 			$lock->remove();
 		}
 
-		Option::set(Constants::MODULE_ID, Constants::OPTION_LAST_REPORT, static::reportLine($report, date('Y-m-d H:i:s')));
+		Option::set(Constants::MODULE_ID, Constants::OPTION_LAST_REPORT, static::reportJson($report, date('Y-m-d H:i:s')));
 		static::log($report);
 
 		return $report;
@@ -113,7 +113,15 @@ final class Runner
 		return $report->collectionId > 0 ? (string)$report->collectionId : null;
 	}
 
-	/** Строка итога для страницы настроек. */
+	/**
+	 * Итог для страницы настроек — JSON (Settings\ReportView разбирает его в сводку).
+	 */
+	public static function reportJson(ImportReport $report, string $at): string
+	{
+		return (string)json_encode($report->toArray($at), JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+	}
+
+	/** Строка итога для журнала. */
 	public static function reportLine(ImportReport $report, string $at): string
 	{
 		return $at.' — '.$report->summary();

@@ -62,6 +62,7 @@ Check::same('изменённая перезаписана', $note->documents[$i
 Check::same('хэш соответствия обновлён', $map->get('shef.toolsai:guide', 'a.md')['hash'], $articles[0]->hash);
 Check::same('правленная руками не тронута', $note->documents[$idB]['markdown'], 'текст Б, правка человека');
 Check::same('и названа в отчёте', $r->manual, ['shef.toolsai:guide/b.md']);
+Check::same('с названием и документом — для сводки', $r->manualItems, [['label' => 'shef.toolsai:guide/b.md', 'title' => 'Бета', 'documentId' => $idB]]);
 Check::same('хэш правленной не тронут', $map->get('shef.toolsai:guide', 'b.md')['hash'] === $articles[1]->hash, false);
 Check::same('новая создана', $r->get(Planner::CREATE), 1);
 Check::same('итог', [$r->get(Planner::UPDATE), $r->get(Planner::MANUAL), $r->get(Planner::UNCHANGED)], [1, 1, 1]);
