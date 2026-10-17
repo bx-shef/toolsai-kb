@@ -21,7 +21,7 @@ Check::same('зависимости линейки', $settings['requireModules']
 Check::same('все ключи readonly', array_unique(array_column($settings, 'readonly')), [true]);
 Check::same('контроллеры — Shef\ToolsAiKb\Controller', $settings['controllers']['value']['defaultNamespace'], '\\Shef\\ToolsAiKb\\Controller');
 Check::same('каталог контроллеров есть (иначе ajax — 404)', is_file($root.'/lib/controller/search.php'), true);
-Check::same('событий не ставит', $settings['installEvents']['value'], []);
+Check::same('подписки — только меню вида «ИИ» (viewsettingsmenu_test)', array_column(array_column($settings['installEvents']['value'], 'from'), 'event'), ['OnViewSettingsMenuBuild']);
 
 Check::group('установщик');
 
@@ -36,7 +36,7 @@ preg_match("/OPTIONS_TO_DELETE = \\[([^\\]]*)\\]/", $installer, $del);
 $deleted = array_map(static fn(string $x): string => trim($x, " '"), explode(',', $del[1] ?? ''));
 $shef_toolsaikb_default_option = null;
 require $root.'/default_option.php';
-Check::same('удаление стирает все настройки, кроме ID раздела', $deleted, array_merge(array_keys($shef_toolsaikb_default_option), [Constants::OPTION_LAST_REPORT]));
+Check::same('удаление стирает все настройки, кроме ID раздела', $deleted, array_merge(array_keys($shef_toolsaikb_default_option), [Constants::OPTION_LAST_REPORT, \Shef\ToolsAiKb\Main\Maintenance::OPTION_VERSION]));
 Check::same('ID раздела переживает удаление', in_array(Constants::OPTION_COLLECTION_ID, $deleted, true), false);
 Check::same('таблица соответствий переживает удаление', str_contains($installer, 'MappingTable::drop'), false);
 Check::same('класс установщика', str_contains($installer, 'class shef_toolsaikb'), true);

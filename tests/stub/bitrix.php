@@ -194,3 +194,48 @@ namespace Bitrix\Main\Engine
 		}
 	}
 }
+
+namespace Bitrix\Main\Config
+{
+	/** Настройки модулей в памяти. */
+	class Option
+	{
+		/** @var array<string, array<string, mixed>> */
+		public static array $values = [];
+
+		public static function get(string $moduleId, string $name, mixed $default = '', mixed $siteId = false): mixed
+		{
+			return static::$values[$moduleId][$name] ?? $default;
+		}
+
+		public static function set(string $moduleId, string $name, mixed $value = ''): void
+		{
+			static::$values[$moduleId][$name] = $value;
+		}
+	}
+}
+
+namespace Bitrix\Main
+{
+	/** Журнал регистраций подписок. */
+	class EventManager
+	{
+		/** @var list<array> */
+		public static array $registered = [];
+
+		public static function getInstance(): static
+		{
+			return new static();
+		}
+
+		public function registerEventHandler(string $fromModule, string $event, string $toModule, string $class, string $method, int $sort = 100): void
+		{
+			static::$registered[] = [$fromModule, $event, $toModule, $class, $method];
+		}
+
+		public function registerEventHandlerCompatible(string $fromModule, string $event, string $toModule, string $class, string $method, int $sort = 100): void
+		{
+			static::$registered[] = [$fromModule, $event, $toModule, $class, $method];
+		}
+	}
+}

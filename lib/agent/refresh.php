@@ -5,6 +5,7 @@ namespace Shef\ToolsAiKb\Agent;
 use Bitrix\Main\Config\Option;
 use Shef\ToolsAiKb\Import\Runner;
 use Shef\ToolsAiKb\Main\Constants;
+use Shef\ToolsAiKb\Main\Maintenance;
 
 /**
  * Агент «Обновить статьи» — раз в сутки (Constants::AGENT_INTERVAL).
@@ -20,6 +21,8 @@ final class Refresh
 	 */
 	public static function run(): string
 	{
+		// Обновление копированием: подписки installEvents (Main\Maintenance)
+		Maintenance::ensure();
 		try
 		{
 			if(Option::get(Constants::MODULE_ID, Constants::OPTION_AGENT, 'Y') === 'Y')

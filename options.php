@@ -32,6 +32,8 @@ global $APPLICATION;
 // Без права чтения на модуль своя часть не показывается; отказ выведет options_page.php
 if(Loader::includeModule('shef.toolsaikb') && $APPLICATION->GetGroupRight('shef.toolsaikb') >= 'R')
 {
+	// Обновление копированием: подписки installEvents (Main\Maintenance)
+	\Shef\ToolsAiKb\Main\Maintenance::ensure();
 	$canWrite = $APPLICATION->GetGroupRight('shef.toolsaikb') >= 'W';
 	Extension::load(['ui.alerts', 'ui.buttons']);
 	$request = Context::getCurrent()?->getRequest();

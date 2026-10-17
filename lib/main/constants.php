@@ -35,6 +35,12 @@ final class Constants
 	public const AGENT_NAME = '\\Shef\\ToolsAiKb\\Agent\\Refresh::run();';
 	public const AGENT_INTERVAL = 86400;
 
+	/** Страница настроек модуля на языке страницы (пункт в меню шестерёнки вида «ИИ», 1.1.2). */
+	public static function settingsUrl(): string
+	{
+		return '/bitrix/admin/settings.php?mid='.self::MODULE_ID.'&lang='.(defined('LANGUAGE_ID') ? LANGUAGE_ID : 'ru');
+	}
+
 	/** Адрес документа `note` от корня портала. */
 	public static function documentUrl(int $documentId): string
 	{
