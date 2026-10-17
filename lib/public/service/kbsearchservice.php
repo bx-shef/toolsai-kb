@@ -205,7 +205,15 @@ final class KbSearchService
 		$ranked = [];
 		if($index !== null && $merged !== [])
 		{
-			$ranked = $index->rank($query, array_map(static fn(array $hit): int => (int)$hit['id'], $merged), self::TEXT_MAX);
+			try
+			{
+				$ranked = $index->rank($query, array_map(static fn(array $hit): int => (int)$hit['id'], $merged), self::TEXT_MAX);
+			}
+			catch(\Throwable)
+			{
+				// Индекс сломан — порядок и сниппеты `note`, поиск не падает
+				$ranked = [];
+			}
 			$position = array_flip(array_keys($ranked));
 			$order = array_flip(array_map(static fn(array $hit): int => (int)$hit['id'], $merged));
 			usort($merged, static fn(array $a, array $b): int => [$position[(int)$a['id']] ?? PHP_INT_MAX, $order[(int)$a['id']]] <=> [$position[(int)$b['id']] ?? PHP_INT_MAX, $order[(int)$b['id']]]);

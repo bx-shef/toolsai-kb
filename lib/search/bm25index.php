@@ -71,12 +71,20 @@ final class Bm25Index
 	/** Из кеша; негодное — пустой индекс. */
 	public static function fromArray(mixed $data): self
 	{
+		$empty = new self([], [], 0.0);
 		if(!is_array($data) || !is_array($data['chunks'] ?? null) || !is_array($data['df'] ?? null))
 		{
-			return new self([], [], 0.0);
+			return $empty;
+		}
+		foreach($data['chunks'] as $chunk)
+		{
+			if(!is_array($chunk) || !is_int($chunk['documentId'] ?? null) || !is_string($chunk['heading'] ?? null) || !is_string($chunk['text'] ?? null) || !is_array($chunk['tf'] ?? null) || !is_int($chunk['len'] ?? null))
+			{
+				return $empty;
+			}
 		}
 
-		return new self($data['chunks'], $data['df'], (float)($data['avg'] ?? 0));
+		return new self(array_values($data['chunks']), $data['df'], (float)($data['avg'] ?? 0));
 	}
 
 	/** Сколько фрагментов в индексе. */

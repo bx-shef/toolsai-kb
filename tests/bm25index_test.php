@@ -30,6 +30,16 @@ Check::same('нет кандидатов — пусто', $index->rank('расх
 Check::same('вопрос из стоп-слов — пусто', $index->rank('как и что', [1, 2, 3], 1500), []);
 Check::same('заголовок весомее текста', array_key_first($index->rank('звонки', [1, 2, 3], 1500)), 2);
 
+Check::group('редкое слово весомее частого (idf)');
+
+$idf = Bm25Index::build([
+	$row(1, 'А', '', 'квота квота квота'),
+	$row(2, 'Б', '', 'квота ключ'),
+	$row(3, 'В', '', 'квота'),
+	$row(4, 'Г', '', 'квота'),
+]);
+Check::same('фрагмент с редким словом — выше, хоть частого там меньше', array_key_first($idf->rank('квота ключ', [1, 2, 3, 4], 1500)), 2);
+
 Check::group('бюджет');
 
 $small = $index->rank('расход квота перерасход журнал', [1], 70);
@@ -41,7 +51,7 @@ Check::group('кеш');
 
 $again = Bm25Index::fromArray($index->toArray());
 Check::same('из кеша — то же ранжирование', $again->rank('расход квоты', [1, 2, 3], 1500), $index->rank('расход квоты', [1, 2, 3], 1500));
-Check::same('сломанный кеш — пустой индекс', [Bm25Index::fromArray('x')->size(), Bm25Index::fromArray(['chunks' => 1])->size()], [0, 0]);
+Check::same('сломанный кеш — пустой индекс', [Bm25Index::fromArray('x')->size(), Bm25Index::fromArray(['chunks' => 1])->size(), Bm25Index::fromArray(['chunks' => [['documentId' => '1']], 'df' => []])->size()], [0, 0, 0]);
 Check::same('размер и документы', [$index->size(), $index->hasDocument(2), $index->hasDocument(9)], [5, true, false]);
 Check::same('пустой индекс — пусто', Bm25Index::build([])->rank('расход', [1], 100), []);
 
